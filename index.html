@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scoops Chops &amp; Drinks × Mr. Jollof — Order Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="dark">
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="brand">
+    <span class="brand__scoops">SCOOPS</span>
+    <span class="brand__jollof">Mr. Jollof</span>
+  </div>
+  <div class="topbar__actions">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+      <span class="theme-toggle__track"><span class="theme-toggle__thumb"></span></span>
+    </button>
+    <button class="icon-btn" id="cartBtn" aria-label="Open cart">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 4h2l2.2 12.1a2 2 0 0 0 2 1.65h7.9a2 2 0 0 0 1.97-1.63L21 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="21" r="1.4" fill="currentColor"/><circle cx="18" cy="21" r="1.4" fill="currentColor"/></svg>
+      <span class="cart-badge" id="cartCount">0</span>
+    </button>
+  </div>
+</header>
+
+<div class="topbar" style="padding-top:0;">
+  <div class="topbar__location">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-7.5 8-13a8 8 0 1 0-16 0c0 5.5 8 13 8 13Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="9" r="2.6" stroke="currentColor" stroke-width="1.8"/></svg>
+    <div>
+      <span class="topbar__label">Location</span>
+      <strong class="topbar__place">Plot 1, Uke-Wende St, High Level, Makurdi</strong>
+    </div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="search-wrap">
+  <div class="search-bar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m21 21-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <input type="text" id="searchInput" placeholder="Search shawarma, pizza, jollof…" autocomplete="off">
+  </div>
+</div>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero__ember" aria-hidden="true"></div>
+    <span class="hero__eyebrow">Big Flavour · Great Value · Everyday</span>
+    <h1 class="hero__title">Chops, drinks<br><span class="ink">& jollof done right.</span></h1>
+    <p class="hero__sub">Shawarma, pizza, burgers, and the jollof everyone's talking about — ordered online, ready fast.</p>
+    <div class="hero__ctas">
+      <a href="#deals" class="btn btn--primary">See today's deals</a>
+      <a href="#menu" class="btn btn--outline">Browse full menu</a>
+    </div>
+    <span class="hero__note">Breakfast deals run everyday, 7:30am – 11am</span>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="categories">
+    <div class="section-head"><h2>Categories</h2></div>
+    <div class="chip-row" id="categoryRow">
+      <button class="chip is-active" data-cat="all">All</button>
+      <button class="chip" data-cat="combos">🔥 Combos</button>
+      <button class="chip" data-cat="shawarma">🌯 Shawarma</button>
+      <button class="chip" data-cat="pizza">🍕 Pizza</button>
+      <button class="chip" data-cat="burger">🍔 Burger</button>
+      <button class="chip" data-cat="rice">🍚 Rice &amp; Spaghetti</button>
+      <button class="chip" data-cat="noodles">🍜 Noodles</button>
+      <button class="chip" data-cat="sides">🍟 Fries &amp; Sides</button>
+      <button class="chip" data-cat="protein">🍗 Protein &amp; Extras</button>
+      <button class="chip" data-cat="milkshake">🥤 Milkshakes</button>
+      <button class="chip" data-cat="dessert">🍦 Ice Cream</button>
+      <button class="chip" data-cat="snacks">🥐 Snacks</button>
+      <button class="chip" data-cat="drinks">🧃 Drinks</button>
+    </div>
+  </section>
+
+  <!-- DEALS -->
+  <section class="deals" id="deals">
+    <div class="section-head">
+      <div>
+        <h2>Today's deals</h2>
+        <p>Combo pricing, discounted automatically.</p>
+      </div>
+    </div>
+    <div class="deal-grid" id="dealGrid"></div>
+  </section>
+
+  <!-- MENU -->
+  <section class="dishes" id="menu">
+    <div class="section-head"><h2>Full menu</h2></div>
+    <div class="dish-grid" id="dishGrid"></div>
+  </section>
+
+  <!-- BIRTHDAY PACKAGES -->
+  <section class="birthdays" id="birthdays">
+    <div class="section-head">
+      <div>
+        <h2>Birthday offers</h2>
+        <p>Celebrate big — we take care of the rest.</p>
+      </div>
+    </div>
+    <div class="bday-grid" id="bdayGrid"></div>
+  </section>
+
+</main>
+
+<!-- CART / CHECKOUT DRAWER -->
+<aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+
+  <!-- STEP 1: CART -->
+  <div class="cart-step" id="stepCart">
+    <div class="cart-drawer__head">
+      <h3>Your order</h3>
+      <button class="icon-btn" id="closeCart" aria-label="Close cart">✕</button>
+    </div>
+    <div class="cart-drawer__items" id="cartItems">
+      <p class="cart-empty">Your ticket is empty. Add something good.</p>
+    </div>
+    <div class="cart-drawer__footer">
+      <div class="cart-total-row"><span>Total</span><span id="cartTotal">₦0</span></div>
+      <button class="btn btn--primary btn--block" id="checkoutBtn">Checkout</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: CHECKOUT DETAILS -->
+  <div class="cart-step" id="stepCheckout" hidden>
+    <div class="cart-drawer__head">
+      <button class="icon-btn" id="backToCart" aria-label="Back to cart">←</button>
+      <h3>Delivery details</h3>
+      <button class="icon-btn" id="closeCheckout" aria-label="Close">✕</button>
+    </div>
+    <form class="cart-drawer__items checkout-form" id="checkoutForm">
+      <label class="form-field">
+        <span>Full name</span>
+        <input type="text" id="custName" required placeholder="e.g. Ada Okafor">
+      </label>
+      <label class="form-field">
+        <span>Phone number</span>
+        <input type="tel" id="custPhone" required placeholder="080…">
+      </label>
+      <div class="form-field">
+        <span>Order type</span>
+        <div class="radio-row">
+          <label class="radio-chip"><input type="radio" name="fulfil" value="delivery" checked> Delivery</label>
+          <label class="radio-chip"><input type="radio" name="fulfil" value="pickup"> Pickup</label>
+        </div>
+      </div>
+      <label class="form-field" id="addressField">
+        <span>Delivery address</span>
+        <textarea id="custAddress" rows="2" placeholder="Street, area, landmark in Makurdi"></textarea>
+      </label>
+      <label class="form-field">
+        <span>Order notes <em>(optional)</em></span>
+        <textarea id="custNotes" rows="2" placeholder="e.g. less spicy, no onions"></textarea>
+      </label>
+    </form>
+    <div class="cart-drawer__footer">
+      <div class="cart-total-row"><span>Total</span><span id="checkoutTotal">₦0</span></div>
+      <button class="btn btn--primary btn--block" id="placeOrderBtn" form="checkoutForm" type="submit">Place order</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: CONFIRMATION -->
+  <div class="cart-step" id="stepConfirm" hidden>
+    <div class="cart-drawer__head">
+      <h3>Order placed</h3>
+      <button class="icon-btn" id="closeConfirm" aria-label="Close">✕</button>
+    </div>
+    <div class="cart-drawer__items confirm-body">
+      <div class="confirm-icon">✓</div>
+      <p class="confirm-msg">Thanks, <span id="confirmName"></span>! Your order is in.</p>
+      <div class="confirm-ticket" id="confirmTicket"></div>
+    </div>
+    <div class="cart-drawer__footer">
+      <button class="btn btn--primary btn--block" id="trackOrderBtn">Track this order</button>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ORDERS DRAWER -->
+<aside class="cart-drawer" id="ordersDrawer" aria-hidden="true">
+  <div class="cart-drawer__head">
+    <h3>Your orders</h3>
+    <button class="icon-btn" id="closeOrders" aria-label="Close orders">✕</button>
+  </div>
+  <div class="cart-drawer__items" id="ordersList">
+    <p class="cart-empty">No orders yet. Once you check out, they'll show up here.</p>
+  </div>
+</aside>
+
+<!-- PROFILE DRAWER -->
+<aside class="cart-drawer" id="profileDrawer" aria-hidden="true">
+
+  <!-- AUTH STATE: logged out -->
+  <div class="cart-step" id="authView">
+    <div class="cart-drawer__head">
+      <h3 id="authTitle">Log in</h3>
+      <button class="icon-btn" id="closeProfile1" aria-label="Close">✕</button>
+    </div>
+    <form class="cart-drawer__items checkout-form" id="authForm">
+      <p class="cart-empty" id="authHint">Log in to save your address and see your order history.</p>
+      <label class="form-field">
+        <span>Email</span>
+        <input type="email" id="authEmail" required placeholder="you@example.com">
+      </label>
+      <label class="form-field">
+        <span>Password</span>
+        <input type="password" id="authPassword" required placeholder="••••••••" minlength="6">
+      </label>
+      <p class="form-error" id="authError" hidden></p>
+    </form>
+    <div class="cart-drawer__footer">
+      <button class="btn btn--primary btn--block" id="authSubmit" form="authForm" type="submit">Log in</button>
+      <button class="link-btn" id="authToggleMode" type="button">Don't have an account? Sign up</button>
+    </div>
+  </div>
+
+  <!-- AUTH STATE: logged in -->
+  <div class="cart-step" id="accountView" hidden>
+    <div class="cart-drawer__head">
+      <h3>My account</h3>
+      <button class="icon-btn" id="closeProfile2" aria-label="Close">✕</button>
+    </div>
+    <form class="cart-drawer__items checkout-form" id="profileForm">
+      <p class="cart-empty" id="accountEmail"></p>
+      <label class="form-field">
+        <span>Full name</span>
+        <input type="text" id="profileName" placeholder="e.g. Ada Okafor">
+      </label>
+      <label class="form-field">
+        <span>Phone number</span>
+        <input type="tel" id="profilePhone" placeholder="080…">
+      </label>
+      <label class="form-field">
+        <span>Default delivery address</span>
+        <textarea id="profileAddress" rows="2" placeholder="Street, area, landmark in Makurdi"></textarea>
+      </label>
+      <p class="form-error" id="profileSaved" hidden>Saved ✓</p>
+    </form>
+    <div class="cart-drawer__footer">
+      <button class="btn btn--primary btn--block" id="profileSaveBtn" form="profileForm" type="submit">Save details</button>
+      <button class="link-btn" id="logoutBtn" type="button">Log out</button>
+    </div>
+  </div>
+
+</aside>
+
+<div class="drawer-scrim" id="drawerScrim"></div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <p class="site-footer__loc">Plot 1, Uke-Wende Street, High Level, Makurdi, Benue State</p>
+  <div class="site-footer__calls">
+    <a class="call-btn call-btn--phone" href="tel:09077791483">📞 09077791483</a>
+    <a class="call-btn call-btn--wa" href="https://wa.me/2347087662962" target="_blank" rel="noopener">💬 WhatsApp 07087662962</a>
+  </div>
+</footer>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="bottom-nav__item is-active" data-nav="home">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 11 12 4l9 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="bottom-nav__item" data-nav="orders" id="navOrders">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span>Orders</span>
+  </button>
+  <button class="bottom-nav__item" data-nav="cart" id="navCart">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 4h2l2.2 12.1a2 2 0 0 0 2 1.65h7.9a2 2 0 0 0 1.97-1.63L21 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="21" r="1.4" fill="currentColor"/><circle cx="18" cy="21" r="1.4" fill="currentColor"/></svg>
+    <span>Cart</span>
+  </button>
+  <button class="bottom-nav__item" data-nav="profile" id="navProfile">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20.2a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span>Profile</span>
+  </button>
+</nav>
+
+<script type="module" src="supabase-client.js"></script>
+<script type="module" src="main.js"></script>
+</body>
+</html>

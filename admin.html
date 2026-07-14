@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Dashboard — Scoops × Mr. Jollof</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body data-theme="dark">
+
+<!-- LOGIN SCREEN -->
+<div class="admin-login" id="loginScreen">
+  <div class="admin-login__card">
+    <div class="brand" style="justify-content:center; margin-bottom:18px;">
+      <span class="brand__scoops">SCOOPS</span>
+      <span class="brand__jollof">Mr. Jollof</span>
+    </div>
+    <h2 class="admin-login__title">Staff Dashboard</h2>
+    <p class="admin-login__sub">Log in with your staff account.</p>
+    <form id="loginForm" class="checkout-form">
+      <label class="form-field">
+        <span>Email</span>
+        <input type="email" id="loginEmail" required placeholder="you@example.com">
+      </label>
+      <label class="form-field">
+        <span>Password</span>
+        <input type="password" id="loginPassword" required placeholder="••••••••">
+      </label>
+      <p class="form-error" id="loginError" hidden></p>
+      <button class="btn btn--primary btn--block" type="submit">Log in</button>
+    </form>
+    <p class="admin-login__note">Not a staff account? See <code>schema.sql</code> for how to grant staff access.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="admin-shell" id="dashboard" hidden>
+
+  <header class="admin-header">
+    <div class="brand">
+      <span class="brand__scoops">SCOOPS</span>
+      <span class="brand__jollof">Mr. Jollof</span>
+    </div>
+    <button class="icon-btn" id="logoutBtnAdmin" aria-label="Log out">⎋</button>
+  </header>
+
+  <nav class="admin-tabs">
+    <button class="admin-tab is-active" data-tab="orders">Orders</button>
+    <button class="admin-tab" data-tab="menu">Menu</button>
+  </nav>
+
+  <!-- ORDERS TAB -->
+  <section class="admin-panel" id="ordersPanel">
+    <div class="admin-panel__head">
+      <h2>Incoming orders</h2>
+      <button class="icon-btn" id="refreshOrders" aria-label="Refresh">⟳</button>
+    </div>
+    <div id="adminOrdersList" class="admin-list"></div>
+  </section>
+
+  <!-- MENU TAB -->
+  <section class="admin-panel" id="menuPanel" hidden>
+    <div class="admin-panel__head">
+      <h2>Menu availability</h2>
+    </div>
+    <div id="adminMenuList" class="admin-list"></div>
+  </section>
+
+</div>
+
+<script type="module" src="supabase-client.js"></script>
+<script type="module" src="admin.js"></script>
+</body>
+</html>
