@@ -1,4 +1,6 @@
 /* ============ TOKENS ============ */
+[hidden]{ display:none !important; }
+
 :root{
   --font-display:'Bricolage Grotesque', sans-serif;
   --font-body:'Plus Jakarta Sans', sans-serif;
