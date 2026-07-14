@@ -25,7 +25,9 @@ export async function fetchDishes(categorySlug = null) {
   if (categorySlug && categorySlug !== 'all') query = query.eq('category', categorySlug);
   const { data, error } = await query;
   if (error) { console.error('fetchDishes:', error.message); return null; }
-  return data;
+  // 'desc' is a reserved SQL keyword, so the column is named 'description' in the
+  // database — translate it here so the rest of the app can keep using `d.desc`.
+  return data.map(d => ({ ...d, desc: d.description }));
 }
 
 export async function fetchDeals() {
