@@ -56,12 +56,24 @@
 
 /* ============ MENU AVAILABILITY LIST ============ */
 .menu-row{
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
   background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm);
-  padding:12px 14px;
+  padding:12px 14px; display:flex; flex-direction:column; gap:10px;
 }
+.menu-row__top{display:flex; align-items:center; gap:12px;}
+.menu-row__thumb{width:44px; height:44px; border-radius:8px; object-fit:cover; flex-shrink:0;}
+.menu-row__thumb--empty{
+  display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+  background:var(--surface-alt); border:1px solid var(--border);
+}
+.menu-row__info{flex:1; min-width:0;}
 .menu-row__name{font-weight:600; font-size:.88rem;}
 .menu-row__cat{font-size:.7rem; color:var(--muted); text-transform:capitalize;}
+.menu-row__photo{display:flex; gap:8px;}
+.photo-input{
+  flex:1; min-width:0; background:var(--surface-alt); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:8px 10px; font-size:.78rem; font-family:var(--font-body);
+}
+.menu-row__photo .status-btn{padding:8px 14px; font-size:.75rem;}
 .toggle-switch{position:relative; width:44px; height:26px; flex-shrink:0;}
 .toggle-switch input{position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer;}
 .toggle-switch__track{

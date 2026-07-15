@@ -1,6 +1,6 @@
 import {
   supabase, signIn, signOut, getCurrentUser, fetchProfile,
-  fetchAllOrders, updateOrderStatus, fetchDishes, toggleDishAvailability
+  fetchAllOrders, updateOrderStatus, fetchDishes, toggleDishAvailability, updateDishImage
 } from './supabase-client.js';
 
 const money = (n) => '₦' + n.toLocaleString('en-NG');
@@ -138,7 +138,7 @@ async function setStatus(orderId, status) {
 
 document.getElementById('refreshOrders').addEventListener('click', loadOrders);
 
-/* ============ MENU AVAILABILITY ============ */
+/* ============ MENU AVAILABILITY & PHOTOS ============ */
 async function loadMenu() {
   const dishes = await fetchDishes();
   renderMenu(dishes ?? []);
@@ -156,17 +156,27 @@ function renderMenu(dishes) {
     const catHeader = d.category !== lastCategory ? `<div class="cat-group-label">${d.category}</div>` : '';
     lastCategory = d.category;
     const checked = d.is_available !== false ? 'checked' : '';
+    const thumb = d.image_url
+      ? `<img class="menu-row__thumb" src="${d.image_url}" alt="">`
+      : `<div class="menu-row__thumb menu-row__thumb--empty">🍽️</div>`;
     return `
       ${catHeader}
       <div class="menu-row">
-        <div>
-          <div class="menu-row__name">${d.name}</div>
-          <div class="menu-row__cat">${d.is_available !== false ? 'Available' : 'Sold out'}</div>
+        <div class="menu-row__top">
+          ${thumb}
+          <div class="menu-row__info">
+            <div class="menu-row__name">${d.name}</div>
+            <div class="menu-row__cat">${d.is_available !== false ? 'Available' : 'Sold out'}</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-dish="${d.id}" ${checked}>
+            <span class="toggle-switch__track"><span class="toggle-switch__thumb"></span></span>
+          </label>
         </div>
-        <label class="toggle-switch">
-          <input type="checkbox" data-dish="${d.id}" ${checked}>
-          <span class="toggle-switch__track"><span class="toggle-switch__thumb"></span></span>
-        </label>
+        <div class="menu-row__photo">
+          <input type="url" class="photo-input" data-photo-for="${d.id}" placeholder="Paste photo URL…" value="${d.image_url || ''}">
+          <button class="status-btn" data-save-photo="${d.id}">Save</button>
+        </div>
       </div>
     `;
   }).join('');
@@ -175,6 +185,19 @@ function renderMenu(dishes) {
     input.addEventListener('change', async () => {
       const { error } = await toggleDishAvailability(Number(input.dataset.dish), input.checked);
       if (error) { alert('Could not update: ' + error.message); input.checked = !input.checked; return; }
+      loadMenu();
+    });
+  });
+
+  list.querySelectorAll('[data-save-photo]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const dishId = Number(btn.dataset.savePhoto);
+      const input = list.querySelector(`[data-photo-for="${dishId}"]`);
+      const originalText = btn.textContent;
+      btn.textContent = 'Saving…'; btn.disabled = true;
+      const { error } = await updateDishImage(dishId, input.value.trim());
+      btn.disabled = false;
+      if (error) { alert('Could not save photo: ' + error.message); btn.textContent = originalText; return; }
       loadMenu();
     });
   });

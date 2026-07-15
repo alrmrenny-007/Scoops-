@@ -171,6 +171,7 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
   font-family:var(--font-mono); font-weight:800; font-size:.72rem; padding:6px 9px; border-radius:50%;
   width:44px; height:44px; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.05;
 }
+.deal-card__img{width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:var(--radius-sm); margin-bottom:10px;}
 .deal-card__name{font-weight:800; font-size:1.05rem; margin-bottom:4px; padding-right:50px;}
 .deal-card__items{color:var(--muted); font-size:.78rem; line-height:1.5; margin-bottom:12px;}
 .deal-card__prices{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
@@ -191,6 +192,13 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
 }
 .d-card__name{font-weight:700; font-size:.9rem;}
 .d-card__desc{color:var(--muted); font-size:.74rem; line-height:1.4;}
+.d-card__img{
+  width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:var(--radius-sm);
+}
+.d-card__img--placeholder{
+  display:flex; align-items:center; justify-content:center; font-size:2rem;
+  background:linear-gradient(155deg, var(--surface-alt), var(--surface));
+}
 .d-card__row{display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0;}
 .d-card__price{font-family:var(--font-mono); color:var(--accent-2); font-weight:700; font-size:.9rem;}
 .size-select{

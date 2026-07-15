@@ -160,3 +160,14 @@ export async function toggleDishAvailability(dishId, isAvailable) {
     .single();
   return { data, error };
 }
+
+export async function updateDishImage(dishId, imageUrl) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { data, error } = await supabase
+    .from('dishes')
+    .update({ image_url: imageUrl || null })
+    .eq('id', dishId)
+    .select()
+    .single();
+  return { data, error };
+}

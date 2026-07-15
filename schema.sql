@@ -12,6 +12,7 @@ create table dishes (
   price integer,                   -- used when the item has one price
   sizes jsonb,                     -- used when the item has size variants:
                                     -- e.g. [{"label":"Small","price":3000},{"label":"Big","price":3800}]
+  image_url text,                  -- photo URL, set from admin.html — null shows a placeholder icon
   is_available boolean default true,
   created_at timestamptz default now()
 );
@@ -25,6 +26,7 @@ create table deals (
   save integer not null,
   badge text,                      -- e.g. "15% OFF"
   note text,                       -- e.g. "Everyday, 7:30am – 11am"
+  image_url text,
   created_at timestamptz default now()
 );
 
@@ -170,6 +172,16 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 ('Basic', 30000, 35000, '["1 Table Reservation","Balloon table decoration","Allowed to bring in Cakes"]', false),
 ('Flex', 80000, 90000, '["2 Table Reservations","Balloon table decoration","Allowed to bring in Cakes","1 gift pack for celebrant"]', true),
 ('Experience', 150000, 165000, '["2+ Table Reservation","Balloon table decoration","Allowed to bring in Cakes","1 gift pack for celebrant","Free photoshoot"]', false);
+
+-- ============================================================
+-- ALREADY HAVE A LIVE DATABASE? Don't re-run this whole file —
+-- it would drop and recreate every table, wiping your real orders
+-- and staff account. Instead, just run this small migration:
+--
+--   alter table dishes add column if not exists image_url text;
+--   alter table deals add column if not exists image_url text;
+--
+-- ============================================================
 
 -- ============================================================
 -- MAKING SOMEONE STAFF (do this after they've signed up once

@@ -118,6 +118,7 @@ function renderDeals() {
   const grid = document.getElementById('dealGrid');
   grid.innerHTML = deals.map(d => `
     <div class="deal-card">
+      ${d.image_url ? `<img class="deal-card__img" src="${d.image_url}" alt="${d.name}" loading="lazy">` : ''}
       <span class="deal-card__badge">${d.badge}</span>
       <div class="deal-card__name">${d.name}</div>
       <div class="deal-card__items">${d.items}</div>
@@ -136,6 +137,16 @@ function renderDeals() {
   });
 }
 
+const CATEGORY_ICON = {
+  shawarma: '🌯', pizza: '🍕', burger: '🍔', rice: '🍚', noodles: '🍜',
+  sides: '🍟', protein: '🍗', milkshake: '🥤', dessert: '🍦', snacks: '🥐', drinks: '🧃'
+};
+
+function dishImageHtml(d) {
+  if (d.image_url) return `<img class="d-card__img" src="${d.image_url}" alt="${d.name}" loading="lazy">`;
+  return `<div class="d-card__img d-card__img--placeholder">${CATEGORY_ICON[d.category] || '🍽️'}</div>`;
+}
+
 /* ============ RENDER: DISHES ============ */
 function renderDishes(list) {
   const grid = document.getElementById('dishGrid');
@@ -145,6 +156,7 @@ function renderDishes(list) {
   }
   grid.innerHTML = list.map(d => `
     <div class="d-card ${d.is_available === false ? 'is-sold-out' : ''}" data-dish="${d.id}">
+      ${dishImageHtml(d)}
       <div class="d-card__name">${d.name}</div>
       <div class="d-card__desc">${d.desc}</div>
       <div class="d-card__row">

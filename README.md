@@ -16,6 +16,24 @@ Just open `index.html` in a browser, or serve the folder (`npx serve .`). It wor
    ```
 5. Reload — the app pulls dishes, deals, and birthday packages live from Supabase, and checkout inserts real rows into `orders`.
 
+## Product photos (new)
+Dishes without a photo show a clean category-icon placeholder instead of a broken image or blank space — nothing looks unfinished while you're still adding photos.
+
+**To add a real photo to a dish, from your phone:**
+1. In Supabase, go to **Storage** (left sidebar) → **New bucket** → name it `menu-images` → toggle **Public bucket** on → Create.
+2. Open the bucket → **Upload file** → pick a photo from your phone.
+3. Tap the uploaded file → copy its **public URL** (Supabase shows a "Get URL" or copy-link option).
+4. Go to `admin.html` → **Menu** tab → find the dish → paste the URL into the **Photo URL** field → **Save**.
+
+The photo appears on the live menu immediately — no redeploy needed, since it's stored in the database, not in your code. You can do this one dish at a time whenever you have a photo ready.
+
+## Migration note
+If you already ran the original `schema.sql` and have live data (staff account, real orders), **don't re-run the whole file again** — it drops and recreates every table. For the photo feature, just run this small addition once in the SQL Editor:
+```sql
+alter table dishes add column if not exists image_url text;
+alter table deals add column if not exists image_url text;
+```
+
 ## Customer accounts (updated)
 Login/signup now lives on its own page — **`account.html`** — instead of a sidebar drawer. Tapping **Profile** in the bottom nav takes you there directly.
 - Not logged in → clean centered login/signup card (same pattern as the staff dashboard).
