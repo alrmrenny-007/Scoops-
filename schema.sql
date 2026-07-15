@@ -8,7 +8,7 @@ create table dishes (
   name text not null,
   category text not null,          -- shawarma, pizza, burger, sides, milkshake, dessert,
                                     -- snacks, drinks, rice, noodles, protein
-  desc text,
+  description text,
   price integer,                   -- used when the item has one price
   sizes jsonb,                     -- used when the item has size variants:
                                     -- e.g. [{"label":"Small","price":3000},{"label":"Big","price":3800}]
@@ -98,7 +98,7 @@ create policy "Staff update dishes" on dishes for update using (
 );
 
 -- ---------- SEED: DISHES ----------
-insert into dishes (name, category, desc, price, sizes) values
+insert into dishes (name, category, description, price, sizes) values
 -- Shawarma
 ('Beef Shawarma', 'shawarma', 'Grilled beef, house sauce, warm wrap.', null, '[{"label":"Small","price":3000},{"label":"Medium","price":3400},{"label":"Big","price":3800}]'),
 ('Chicken Shawarma', 'shawarma', 'Grilled chicken, house sauce, warm wrap.', null, '[{"label":"Small","price":3000},{"label":"Medium","price":3400},{"label":"Big","price":3800}]'),

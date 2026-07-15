@@ -88,13 +88,25 @@
         <p>Combo pricing, discounted automatically.</p>
       </div>
     </div>
-    <div class="deal-grid" id="dealGrid"></div>
+    <div class="deal-grid" id="dealGrid">
+      <div class="deal-card skel-card"><div class="skel-bar" style="width:60%;height:20px;margin-bottom:10px"></div><div class="skel-bar" style="width:100%;height:11px;margin-bottom:5px"></div><div class="skel-bar" style="width:80%;height:11px;margin-bottom:16px"></div><div class="skel-bar" style="width:45%;height:22px"></div></div>
+      <div class="deal-card skel-card"><div class="skel-bar" style="width:55%;height:20px;margin-bottom:10px"></div><div class="skel-bar" style="width:100%;height:11px;margin-bottom:5px"></div><div class="skel-bar" style="width:70%;height:11px;margin-bottom:16px"></div><div class="skel-bar" style="width:45%;height:22px"></div></div>
+      <div class="deal-card skel-card"><div class="skel-bar" style="width:65%;height:20px;margin-bottom:10px"></div><div class="skel-bar" style="width:100%;height:11px;margin-bottom:5px"></div><div class="skel-bar" style="width:85%;height:11px;margin-bottom:16px"></div><div class="skel-bar" style="width:45%;height:22px"></div></div>
+      <div class="deal-card skel-card"><div class="skel-bar" style="width:50%;height:20px;margin-bottom:10px"></div><div class="skel-bar" style="width:100%;height:11px;margin-bottom:5px"></div><div class="skel-bar" style="width:75%;height:11px;margin-bottom:16px"></div><div class="skel-bar" style="width:45%;height:22px"></div></div>
+    </div>
   </section>
 
   <!-- MENU -->
   <section class="dishes" id="menu">
     <div class="section-head"><h2>Full menu</h2></div>
-    <div class="dish-grid" id="dishGrid"></div>
+    <div class="dish-grid" id="dishGrid">
+      <div class="d-card skel-card"><div class="skel-bar" style="width:70%;height:15px;margin-bottom:8px"></div><div class="skel-bar" style="width:100%;height:10px;margin-bottom:4px"></div><div class="skel-bar" style="width:85%;height:10px;margin-bottom:12px"></div><div class="skel-bar" style="width:50%;height:17px"></div></div>
+      <div class="d-card skel-card"><div class="skel-bar" style="width:60%;height:15px;margin-bottom:8px"></div><div class="skel-bar" style="width:100%;height:10px;margin-bottom:4px"></div><div class="skel-bar" style="width:75%;height:10px;margin-bottom:12px"></div><div class="skel-bar" style="width:50%;height:17px"></div></div>
+      <div class="d-card skel-card"><div class="skel-bar" style="width:65%;height:15px;margin-bottom:8px"></div><div class="skel-bar" style="width:100%;height:10px;margin-bottom:4px"></div><div class="skel-bar" style="width:90%;height:10px;margin-bottom:12px"></div><div class="skel-bar" style="width:50%;height:17px"></div></div>
+      <div class="d-card skel-card"><div class="skel-bar" style="width:55%;height:15px;margin-bottom:8px"></div><div class="skel-bar" style="width:100%;height:10px;margin-bottom:4px"></div><div class="skel-bar" style="width:80%;height:10px;margin-bottom:12px"></div><div class="skel-bar" style="width:50%;height:17px"></div></div>
+      <div class="d-card skel-card"><div class="skel-bar" style="width:70%;height:15px;margin-bottom:8px"></div><div class="skel-bar" style="width:100%;height:10px;margin-bottom:4px"></div><div class="skel-bar" style="width:70%;height:10px;margin-bottom:12px"></div><div class="skel-bar" style="width:50%;height:17px"></div></div>
+      <div class="d-card skel-card"><div class="skel-bar" style="width:60%;height:15px;margin-bottom:8px"></div><div class="skel-bar" style="width:100%;height:10px;margin-bottom:4px"></div><div class="skel-bar" style="width:85%;height:10px;margin-bottom:12px"></div><div class="skel-bar" style="width:50%;height:17px"></div></div>
+    </div>
   </section>
 
   <!-- BIRTHDAY PACKAGES -->
@@ -105,7 +117,11 @@
         <p>Celebrate big — we take care of the rest.</p>
       </div>
     </div>
-    <div class="bday-grid" id="bdayGrid"></div>
+    <div class="bday-grid" id="bdayGrid">
+      <div class="bday-card skel-card"><div class="skel-bar" style="width:50%;height:18px;margin-bottom:10px"></div><div class="skel-bar" style="width:70%;height:14px;margin-bottom:14px"></div><div class="skel-bar" style="width:100%;height:11px;margin-bottom:6px"></div><div class="skel-bar" style="width:90%;height:11px;margin-bottom:6px"></div><div class="skel-bar" style="width:80%;height:11px"></div></div>
+      <div class="bday-card skel-card"><div class="skel-bar" style="width:45%;height:18px;margin-bottom:10px"></div><div class="skel-bar" style="width:65%;height:14px;margin-bottom:14px"></div><div class="skel-bar" style="width:100%;height:11px;margin-bottom:6px"></div><div class="skel-bar" style="width:85%;height:11px;margin-bottom:6px"></div><div class="skel-bar" style="width:75%;height:11px"></div></div>
+      <div class="bday-card skel-card"><div class="skel-bar" style="width:55%;height:18px;margin-bottom:10px"></div><div class="skel-bar" style="width:70%;height:14px;margin-bottom:14px"></div><div class="skel-bar" style="width:100%;height:11px;margin-bottom:6px"></div><div class="skel-bar" style="width:90%;height:11px;margin-bottom:6px"></div><div class="skel-bar" style="width:70%;height:11px"></div></div>
+    </div>
   </section>
 
 </main>
@@ -176,6 +192,25 @@
       <div class="confirm-icon">✓</div>
       <p class="confirm-msg">Thanks, <span id="confirmName"></span>! Your order is in.</p>
       <div class="confirm-ticket" id="confirmTicket"></div>
+
+      <!-- Soft prompt: only shown to guests who just checked out -->
+      <div class="save-prompt" id="savePrompt" hidden>
+        <p class="save-prompt__title">Save your details for faster ordering next time?</p>
+        <p class="save-prompt__sub">We'll keep your name, phone, and address on file — checkout becomes one tap.</p>
+        <form id="savePromptForm">
+          <label class="form-field">
+            <span>Email</span>
+            <input type="email" id="promptEmail" required placeholder="you@example.com">
+          </label>
+          <label class="form-field">
+            <span>Create a password</span>
+            <input type="password" id="promptPassword" required placeholder="••••••••" minlength="6">
+          </label>
+          <p class="form-error" id="promptError" hidden></p>
+          <button class="btn btn--primary btn--block" type="submit">Save my details</button>
+        </form>
+        <button class="link-btn" id="skipPrompt" type="button">No thanks, maybe next time</button>
+      </div>
     </div>
     <div class="cart-drawer__footer">
       <button class="btn btn--primary btn--block" id="trackOrderBtn">Track this order</button>
@@ -193,63 +228,6 @@
   <div class="cart-drawer__items" id="ordersList">
     <p class="cart-empty">No orders yet. Once you check out, they'll show up here.</p>
   </div>
-</aside>
-
-<!-- PROFILE DRAWER -->
-<aside class="cart-drawer" id="profileDrawer" aria-hidden="true">
-
-  <!-- AUTH STATE: logged out -->
-  <div class="cart-step" id="authView">
-    <div class="cart-drawer__head">
-      <h3 id="authTitle">Log in</h3>
-      <button class="icon-btn" id="closeProfile1" aria-label="Close">✕</button>
-    </div>
-    <form class="cart-drawer__items checkout-form" id="authForm">
-      <p class="cart-empty" id="authHint">Log in to save your address and see your order history.</p>
-      <label class="form-field">
-        <span>Email</span>
-        <input type="email" id="authEmail" required placeholder="you@example.com">
-      </label>
-      <label class="form-field">
-        <span>Password</span>
-        <input type="password" id="authPassword" required placeholder="••••••••" minlength="6">
-      </label>
-      <p class="form-error" id="authError" hidden></p>
-    </form>
-    <div class="cart-drawer__footer">
-      <button class="btn btn--primary btn--block" id="authSubmit" form="authForm" type="submit">Log in</button>
-      <button class="link-btn" id="authToggleMode" type="button">Don't have an account? Sign up</button>
-    </div>
-  </div>
-
-  <!-- AUTH STATE: logged in -->
-  <div class="cart-step" id="accountView" hidden>
-    <div class="cart-drawer__head">
-      <h3>My account</h3>
-      <button class="icon-btn" id="closeProfile2" aria-label="Close">✕</button>
-    </div>
-    <form class="cart-drawer__items checkout-form" id="profileForm">
-      <p class="cart-empty" id="accountEmail"></p>
-      <label class="form-field">
-        <span>Full name</span>
-        <input type="text" id="profileName" placeholder="e.g. Ada Okafor">
-      </label>
-      <label class="form-field">
-        <span>Phone number</span>
-        <input type="tel" id="profilePhone" placeholder="080…">
-      </label>
-      <label class="form-field">
-        <span>Default delivery address</span>
-        <textarea id="profileAddress" rows="2" placeholder="Street, area, landmark in Makurdi"></textarea>
-      </label>
-      <p class="form-error" id="profileSaved" hidden>Saved ✓</p>
-    </form>
-    <div class="cart-drawer__footer">
-      <button class="btn btn--primary btn--block" id="profileSaveBtn" form="profileForm" type="submit">Save details</button>
-      <button class="link-btn" id="logoutBtn" type="button">Log out</button>
-    </div>
-  </div>
-
 </aside>
 
 <div class="drawer-scrim" id="drawerScrim"></div>
@@ -277,10 +255,10 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 4h2l2.2 12.1a2 2 0 0 0 2 1.65h7.9a2 2 0 0 0 1.97-1.63L21 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="21" r="1.4" fill="currentColor"/><circle cx="18" cy="21" r="1.4" fill="currentColor"/></svg>
     <span>Cart</span>
   </button>
-  <button class="bottom-nav__item" data-nav="profile" id="navProfile">
+  <a class="bottom-nav__item" data-nav="profile" href="account.html">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20.2a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
     <span>Profile</span>
-  </button>
+  </a>
 </nav>
 
 <script type="module" src="supabase-client.js"></script>

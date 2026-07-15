@@ -1,6 +1,6 @@
 import {
   fetchDishes, fetchDeals, fetchBirthdayPackages, placeOrder,
-  signUp, signIn, signOut, getCurrentUser,
+  signUp, getCurrentUser,
   fetchProfile, upsertProfile, fetchMyOrders, supabase
 } from './supabase-client.js';
 
@@ -100,6 +100,7 @@ let activeCategory = 'all';
 let cart = JSON.parse(localStorage.getItem('scoops_cart') || '[]');
 let currentUser = null;
 let currentProfile = null;
+let lastOrderCustomer = null;
 
 /* ============ THEME ============ */
 const themeToggle = document.getElementById('themeToggle');
@@ -292,7 +293,7 @@ function closeCart() { drawer.classList.remove('is-open'); scrim.classList.remov
 document.getElementById('cartBtn').addEventListener('click', openCart);
 document.getElementById('navCart').addEventListener('click', openCart);
 document.getElementById('closeCart').addEventListener('click', closeCart);
-scrim.addEventListener('click', () => { closeCart(); closeOrders(); closeProfile(); });
+scrim.addEventListener('click', () => { closeCart(); closeOrders(); });
 
 /* ============ CHECKOUT FLOW ============ */
 const stepCart = document.getElementById('stepCart');
@@ -360,6 +361,7 @@ checkoutForm.addEventListener('submit', async (e) => {
     createdAt: Date.now()
   };
   saveOrderToHistory(order);
+  lastOrderCustomer = customer;
 
   document.getElementById('confirmName').textContent = customer.name || 'there';
   document.getElementById('confirmTicket').innerHTML = `
@@ -369,6 +371,9 @@ checkoutForm.addEventListener('submit', async (e) => {
     Total: ${money(total)}<br>
     ${customer.fulfilment === 'pickup' ? 'Pickup at Uke-Wende St, Makurdi' : 'Delivering to: ' + (customer.address || '—')}
   `;
+
+  // Only nudge guests — logged-in customers already have their details saved.
+  document.getElementById('savePrompt').hidden = !!currentUser;
 
   cart = [];
   saveCart(); renderCart();
@@ -463,57 +468,25 @@ function closeOrders() { ordersDrawer.classList.remove('is-open'); scrim.classLi
 document.getElementById('navOrders').addEventListener('click', openOrders);
 document.getElementById('closeOrders').addEventListener('click', closeOrders);
 
-/* ============ AUTH & PROFILE ============ */
-const profileDrawer = document.getElementById('profileDrawer');
-const authView = document.getElementById('authView');
-const accountView = document.getElementById('accountView');
-let authMode = 'login'; // or 'signup'
-
-function openProfile() {
-  profileDrawer.classList.add('is-open');
-  scrim.classList.add('is-open');
-  renderProfileDrawer();
-}
-function closeProfile() { profileDrawer.classList.remove('is-open'); scrim.classList.remove('is-open'); }
-
-function renderProfileDrawer() {
-  const loggedIn = !!currentUser;
-  authView.hidden = loggedIn;
-  accountView.hidden = !loggedIn;
-  if (loggedIn) {
-    document.getElementById('accountEmail').textContent = currentUser.email;
-    document.getElementById('profileName').value = currentProfile?.name || '';
-    document.getElementById('profilePhone').value = currentProfile?.phone || '';
-    document.getElementById('profileAddress').value = currentProfile?.default_address || '';
-  }
-}
-
-document.getElementById('navProfile').addEventListener('click', openProfile);
-document.getElementById('closeProfile1').addEventListener('click', closeProfile);
-document.getElementById('closeProfile2').addEventListener('click', closeProfile);
-
-document.getElementById('authToggleMode').addEventListener('click', () => {
-  authMode = authMode === 'login' ? 'signup' : 'login';
-  document.getElementById('authTitle').textContent = authMode === 'login' ? 'Log in' : 'Sign up';
-  document.getElementById('authSubmit').textContent = authMode === 'login' ? 'Log in' : 'Sign up';
-  document.getElementById('authToggleMode').textContent =
-    authMode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Log in';
-  document.getElementById('authError').hidden = true;
+/* ============ SOFT SIGNUP PROMPT (post-checkout, guests only) ============ */
+document.getElementById('skipPrompt').addEventListener('click', () => {
+  document.getElementById('savePrompt').hidden = true;
 });
 
-document.getElementById('authForm').addEventListener('submit', async (e) => {
+document.getElementById('savePromptForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!supabase) {
-    document.getElementById('authError').hidden = false;
-    document.getElementById('authError').textContent = 'Connect Supabase first — see supabase-client.js.';
-    return;
-  }
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
-  const errEl = document.getElementById('authError');
+  const errEl = document.getElementById('promptError');
   errEl.hidden = true;
 
-  const { data, error } = authMode === 'login' ? await signIn(email, password) : await signUp(email, password);
+  if (!supabase) {
+    errEl.hidden = false;
+    errEl.textContent = 'Connect Supabase first — see supabase-client.js.';
+    return;
+  }
+
+  const email = document.getElementById('promptEmail').value.trim();
+  const password = document.getElementById('promptPassword').value;
+  const { data, error } = await signUp(email, password);
 
   if (error) {
     errEl.hidden = false;
@@ -522,35 +495,17 @@ document.getElementById('authForm').addEventListener('submit', async (e) => {
   }
 
   currentUser = data.user;
-  currentProfile = currentUser ? await fetchProfile(currentUser.id) : null;
-  document.getElementById('authForm').reset();
-  renderProfileDrawer();
-});
-
-document.getElementById('profileForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (!currentUser) return;
-  const profile = {
-    name: document.getElementById('profileName').value.trim(),
-    phone: document.getElementById('profilePhone').value.trim(),
-    default_address: document.getElementById('profileAddress').value.trim()
-  };
-  const { data, error } = await upsertProfile(currentUser.id, profile);
-  const savedEl = document.getElementById('profileSaved');
-  if (error) {
-    savedEl.hidden = false; savedEl.textContent = 'Could not save — try again.';
-    return;
+  if (currentUser && lastOrderCustomer) {
+    const { data: profile } = await upsertProfile(currentUser.id, {
+      name: lastOrderCustomer.name,
+      phone: lastOrderCustomer.phone,
+      default_address: lastOrderCustomer.address
+    });
+    currentProfile = profile;
   }
-  currentProfile = data;
-  savedEl.hidden = false; savedEl.textContent = 'Saved ✓';
-  setTimeout(() => { savedEl.hidden = true; }, 2000);
-});
 
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  await signOut();
-  currentUser = null;
-  currentProfile = null;
-  renderProfileDrawer();
+  const prompt = document.getElementById('savePrompt');
+  prompt.innerHTML = `<p class="save-prompt__title">You're all set ✓</p><p class="save-prompt__sub">Your details are saved for next time.</p>`;
 });
 
 /* ============ BOTTOM NAV ============ */

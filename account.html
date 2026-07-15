@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account — Scoops × Mr. Jollof</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body data-theme="dark">
+
+<a class="admin-back" href="index.html">← Back to menu</a>
+
+<!-- AUTH STATE: logged out -->
+<div class="admin-login" id="authScreen">
+  <div class="admin-login__card">
+    <div class="brand" style="justify-content:center; margin-bottom:18px;">
+      <span class="brand__scoops">SCOOPS</span>
+      <span class="brand__jollof">Mr. Jollof</span>
+    </div>
+    <h2 class="admin-login__title" id="authTitle">Log in</h2>
+    <p class="admin-login__sub" id="authHint">Save your address and see your order history.</p>
+    <form id="authForm" class="checkout-form">
+      <label class="form-field">
+        <span>Email</span>
+        <input type="email" id="authEmail" required placeholder="you@example.com">
+      </label>
+      <label class="form-field">
+        <span>Password</span>
+        <input type="password" id="authPassword" required placeholder="••••••••" minlength="6">
+      </label>
+      <p class="form-error" id="authError" hidden></p>
+      <button class="btn btn--primary btn--block" id="authSubmit" type="submit">Log in</button>
+    </form>
+    <button class="link-btn" id="authToggleMode" type="button">Don't have an account? Sign up</button>
+  </div>
+</div>
+
+<!-- AUTH STATE: logged in -->
+<div class="admin-shell" id="accountScreen" hidden>
+
+  <header class="admin-header">
+    <div class="brand"><span class="brand__scoops">SCOOPS</span><span class="brand__jollof">Mr. Jollof</span></div>
+    <button class="icon-btn" id="logoutBtn" aria-label="Log out">⎋</button>
+  </header>
+
+  <nav class="admin-tabs">
+    <button class="admin-tab is-active" data-tab="details">My details</button>
+    <button class="admin-tab" data-tab="history">Order history</button>
+  </nav>
+
+  <!-- DETAILS TAB -->
+  <section class="admin-panel" id="detailsPanel">
+    <form class="checkout-form" id="profileForm" style="margin-top:6px;">
+      <p class="cart-empty" id="accountEmail"></p>
+      <label class="form-field">
+        <span>Full name</span>
+        <input type="text" id="profileName" placeholder="e.g. Ada Okafor">
+      </label>
+      <label class="form-field">
+        <span>Phone number</span>
+        <input type="tel" id="profilePhone" placeholder="080…">
+      </label>
+      <label class="form-field">
+        <span>Default delivery address</span>
+        <textarea id="profileAddress" rows="2" placeholder="Street, area, landmark in Makurdi"></textarea>
+      </label>
+      <p class="form-error" id="profileSaved" hidden>Saved ✓</p>
+      <button class="btn btn--primary btn--block" type="submit">Save details</button>
+    </form>
+  </section>
+
+  <!-- ORDER HISTORY TAB -->
+  <section class="admin-panel" id="historyPanel" hidden>
+    <div id="orderHistoryList" class="admin-list"></div>
+  </section>
+
+</div>
+
+<script type="module" src="supabase-client.js"></script>
+<script type="module" src="account.js"></script>
+</body>
+</html>

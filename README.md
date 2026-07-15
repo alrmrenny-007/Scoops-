@@ -16,10 +16,14 @@ Just open `index.html` in a browser, or serve the folder (`npx serve .`). It wor
    ```
 5. Reload — the app pulls dishes, deals, and birthday packages live from Supabase, and checkout inserts real rows into `orders`.
 
-## Customer accounts (new)
-- Tap **Profile** in the bottom nav to sign up / log in (Supabase Auth, email + password).
-- Logged-in customers can save a default name, phone, and delivery address — these auto-fill at checkout.
-- Once logged in, the **Orders** tab pulls real orders tied to that account from Supabase, showing the actual status staff have set (not the simulated timer used for guest/offline orders).
+## Customer accounts (updated)
+Login/signup now lives on its own page — **`account.html`** — instead of a sidebar drawer. Tapping **Profile** in the bottom nav takes you there directly.
+- Not logged in → clean centered login/signup card (same pattern as the staff dashboard).
+- Logged in → two tabs: **My details** (name/phone/default address, auto-fills checkout) and **Order history** (real orders with live status once Supabase is connected).
+- Sessions persist automatically across pages — log in once on `account.html`, and `index.html` will recognize you and prefill checkout without asking again.
+
+## Layout stability (fixed)
+Menu/deals/birthday sections previously rendered empty until the Supabase data finished loading, causing the whole page to jump once content popped in — most noticeable on slower mobile connections. Fixed by baking skeleton placeholder cards directly into `index.html` (not JS-generated), so there's stable, shimmer-animated content on first paint before any network request finishes. JS swaps them for real content once data arrives.
 
 ## Staff / admin dashboard (new)
 A separate page at **`admin.html`** — not linked from the customer site — for managing the business:
@@ -49,9 +53,10 @@ A separate page at **`admin.html`** — not linked from the customer site — fo
 `supabase-client.js` already exports `signUp` / `signIn` using Supabase Auth (email/password). Wire these to a login form when you're ready — orders will then attach to the logged-in user via `user_id`.
 
 ## File map
-- `index.html` — customer site structure (deals, menu, birthday packages, cart/checkout, profile, footer)
-- `style.css` — shared brand tokens (Scoops red + gold, dark/light via `data-theme`), all customer-site components
-- `main.js` — customer site logic: rendering, filtering, cart, checkout, auth, order tracking
+- `index.html` — customer site structure (deals, menu, birthday packages, cart/checkout, footer)
+- `style.css` — shared brand tokens (Scoops red + gold, dark/light via `data-theme`), all customer-site components, skeleton loaders
+- `main.js` — customer site logic: rendering, filtering, cart, checkout, session check, order tracking
+- `account.html` / `account.js` — dedicated login/signup + account page (profile details, order history)
 - `admin.html` / `admin.css` / `admin.js` — staff dashboard (orders + menu availability), gated by `profiles.is_staff`
 - `supabase-client.js` — all Supabase calls: menu data, auth, profiles, orders, staff actions
 - `schema.sql` — database schema, RLS policies, and full seed data

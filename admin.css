@@ -1,4 +1,8 @@
 /* ============ ADMIN LOGIN ============ */
+.admin-back{
+  display:inline-block; margin:16px 0 0 20px; font-size:.82rem; font-weight:600;
+  color:var(--muted); text-decoration:none;
+}
 .admin-login{
   min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
 }

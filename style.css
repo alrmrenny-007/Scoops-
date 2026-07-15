@@ -58,6 +58,16 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
 .section-head p{color:var(--muted); font-size:.85rem; margin-top:4px;}
 .see-all{color:var(--accent); font-weight:600; font-size:.9rem;}
 
+/* ============ SKELETON LOADING (prevents layout shift) ============ */
+@keyframes skel-shimmer{0%{background-position:-150% 0;}100%{background-position:150% 0;}}
+.skel-bar{
+  height:12px; border-radius:6px;
+  background:linear-gradient(90deg, var(--surface-alt) 25%, var(--border) 50%, var(--surface-alt) 75%);
+  background-size:200% 100%;
+  animation:skel-shimmer 1.4s ease-in-out infinite;
+}
+.skel-card{pointer-events:none;}
+
 /* ============ TOPBAR ============ */
 .topbar{
   display:flex; align-items:center; justify-content:space-between;
@@ -269,6 +279,12 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
   width:100%; background:var(--surface-alt); border:1px dashed var(--border); border-radius:var(--radius-md);
   padding:14px 16px; text-align:left; font-family:var(--font-mono); font-size:.8rem; display:flex; flex-direction:column; gap:5px;
 }
+.save-prompt{
+  width:100%; margin-top:20px; padding-top:20px; border-top:1px solid var(--border); text-align:left;
+}
+.save-prompt__title{font-weight:700; font-size:.9rem; margin-bottom:4px;}
+.save-prompt__sub{color:var(--muted); font-size:.78rem; margin-bottom:14px; line-height:1.4;}
+.save-prompt form{display:flex; flex-direction:column; gap:12px;}
 
 /* ============ ORDER TRACKING ============ */
 .order-card{
