@@ -161,10 +161,10 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
 .chip.is-active{background:var(--accent); border-color:var(--accent); color:#fff;}
 
 /* ============ DEAL / COMBO CARDS ============ */
-.deal-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; padding:0 20px;}
+.deal-grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; padding:0 20px;}
 .deal-card{
   position:relative; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
-  padding:16px; box-shadow:var(--shadow); overflow:hidden;
+  padding:16px; box-shadow:var(--shadow); overflow:hidden; min-width:0;
 }
 .deal-card__badge{
   position:absolute; top:12px; right:12px; background:var(--gold); color:#2A1400;
@@ -184,17 +184,17 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
 .deal-card .add-btn{position:absolute; bottom:14px; right:14px;}
 
 /* ============ DISH GRID ============ */
-.dish-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; padding:0 20px 10px;}
+.dish-grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; padding:0 20px 10px;}
 .d-card{
   background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
-  padding:12px; display:flex; flex-direction:column; gap:8px; box-shadow:var(--shadow);
+  padding:12px; display:flex; flex-direction:column; gap:8px; box-shadow:var(--shadow); min-width:0;
 }
 .d-card__name{font-weight:700; font-size:.9rem;}
 .d-card__desc{color:var(--muted); font-size:.74rem; line-height:1.4;}
-.d-card__row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.d-card__row{display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0;}
 .d-card__price{font-family:var(--font-mono); color:var(--accent-2); font-weight:700; font-size:.9rem;}
 .size-select{
-  flex:1; background:var(--surface-alt); border:1px solid var(--border); color:var(--text);
+  flex:1; min-width:0; width:0; background:var(--surface-alt); border:1px solid var(--border); color:var(--text);
   border-radius:8px; padding:6px 8px; font-size:.75rem; font-family:var(--font-mono);
 }
 .add-btn{
@@ -209,10 +209,10 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
 }
 
 /* ============ BIRTHDAY PACKAGES ============ */
-.bday-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; padding:0 20px;}
+.bday-grid{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px; padding:0 20px;}
 .bday-card{
   background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
-  padding:18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px;
+  padding:18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px; min-width:0;
 }
 .bday-card.is-flex{border-color:var(--gold); border-width:2px;}
 .bday-card__tier{font-family:var(--font-display); font-weight:800; font-size:1.1rem;}
@@ -334,8 +334,8 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
 /* ============ RESPONSIVE ============ */
 @media(min-width:720px){
   .hero{grid-template-columns:1fr; padding:48px;}
-  .deal-grid{grid-template-columns:repeat(3,1fr);}
-  .dish-grid{grid-template-columns:repeat(4,1fr);}
+  .deal-grid{grid-template-columns:repeat(3, minmax(0,1fr));}
+  .dish-grid{grid-template-columns:repeat(4, minmax(0,1fr));}
   .bottom-nav{display:none;}
   body{padding-bottom:0;}
 }
