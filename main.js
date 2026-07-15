@@ -143,8 +143,11 @@ const CATEGORY_ICON = {
 };
 
 function dishImageHtml(d) {
-  if (d.image_url) return `<img class="d-card__img" src="${d.image_url}" alt="${d.name}" loading="lazy">`;
-  return `<div class="d-card__img d-card__img--placeholder">${CATEGORY_ICON[d.category] || '🍽️'}</div>`;
+  const icon = CATEGORY_ICON[d.category] || '🍽️';
+  if (d.image_url) {
+    return `<img class="d-card__img" src="${d.image_url}" alt="${d.name}" loading="lazy" onerror="this.outerHTML='<div class=&quot;d-card__img d-card__img--placeholder&quot;>${icon}</div>'">`;
+  }
+  return `<div class="d-card__img d-card__img--placeholder">${icon}</div>`;
 }
 
 /* ============ RENDER: DISHES ============ */

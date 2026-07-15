@@ -177,6 +177,8 @@ function renderMenu(dishes) {
           <input type="url" class="photo-input" data-photo-for="${d.id}" placeholder="Paste photo URL…" value="${d.image_url || ''}">
           <button class="status-btn" data-save-photo="${d.id}">Save</button>
         </div>
+        <p class="photo-hint">Link must point directly to an image file (.jpg/.png) — not a Google Photos/Drive share page.</p>
+        <p class="photo-warning" id="warn-${d.id}" hidden>⚠️ Couldn't load this link as an image — double-check it's a direct image URL.</p>
       </div>
     `;
   }).join('');
@@ -186,6 +188,25 @@ function renderMenu(dishes) {
       const { error } = await toggleDishAvailability(Number(input.dataset.dish), input.checked);
       if (error) { alert('Could not update: ' + error.message); input.checked = !input.checked; return; }
       loadMenu();
+    });
+  });
+
+  // Live-test the pasted URL so a broken link is obvious before Save is even tapped.
+  list.querySelectorAll('.photo-input').forEach(input => {
+    let debounceTimer;
+    input.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      const dishId = input.dataset.photoFor;
+      const warn = document.getElementById(`warn-${dishId}`);
+      warn.hidden = true;
+      const url = input.value.trim();
+      if (!url) return;
+      debounceTimer = setTimeout(() => {
+        const probe = new Image();
+        probe.onload = () => { warn.hidden = true; };
+        probe.onerror = () => { warn.hidden = false; };
+        probe.src = url;
+      }, 500);
     });
   });
 
