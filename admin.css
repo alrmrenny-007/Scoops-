@@ -76,6 +76,8 @@
 .menu-row__photo .status-btn{padding:8px 14px; font-size:.75rem;}
 .photo-hint{font-size:.68rem; color:var(--muted); line-height:1.4;}
 .photo-warning{font-size:.72rem; color:var(--accent); font-weight:600;}
+.menu-row__actions{display:flex; gap:8px;}
+.menu-row__actions .status-btn{padding:8px 14px; font-size:.75rem;}
 .toggle-switch{position:relative; width:44px; height:26px; flex-shrink:0;}
 .toggle-switch input{position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer;}
 .toggle-switch__track{
@@ -92,4 +94,40 @@
 .cat-group-label{
   font-family:var(--font-mono); font-size:.7rem; text-transform:uppercase; letter-spacing:.08em;
   color:var(--accent); margin:16px 0 -2px;
+}
+
+/* ============ DISH FORM ============ */
+.form-field--row{flex-direction:row; align-items:center; gap:8px;}
+.form-field--row input[type="checkbox"]{width:auto;}
+.size-row{display:flex; gap:8px; align-items:center;}
+.size-row input{
+  background:var(--surface-alt); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:9px 10px; font-size:.85rem; font-family:var(--font-body);
+}
+.size-row input.size-row__label{flex:1.2; min-width:0;}
+.size-row input.size-row__price{flex:1; min-width:0;}
+.size-row__remove{
+  width:32px; height:32px; border-radius:50%; background:var(--surface-alt); border:1px solid var(--border);
+  color:var(--muted); font-size:1rem; flex-shrink:0;
+}
+
+/* ============ CUSTOMERS ============ */
+.stat-highlight{font-family:var(--font-mono); font-size:1.6rem; font-weight:800; color:var(--accent); margin-bottom:14px;}
+.customer-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:14px 16px; box-shadow:var(--shadow);
+}
+.customer-card__email{font-weight:700; font-size:.88rem;}
+.customer-card__meta{font-size:.76rem; color:var(--muted); margin-top:2px;}
+
+/* ============ SALES ============ */
+.sales-grid{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px;}
+.sales-stat{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:14px 10px; text-align:center; box-shadow:var(--shadow);
+}
+.sales-stat__label{display:block; font-size:.68rem; color:var(--muted); margin-bottom:6px;}
+.sales-stat__value{display:block; font-family:var(--font-mono); font-weight:800; font-size:1rem; color:var(--accent-2);}
+@media(max-width:400px){
+  .sales-stat__value{font-size:.85rem;}
 }

@@ -16,6 +16,42 @@ Just open `index.html` in a browser, or serve the folder (`npx serve .`). It wor
    ```
 5. Reload — the app pulls dishes, deals, and birthday packages live from Supabase, and checkout inserts real rows into `orders`.
 
+## Full admin CRUD, customers & sales (new)
+The staff dashboard (`admin.html`) now has 4 tabs:
+
+- **Orders** — advance status, cancel, or **permanently delete** any order.
+- **Menu** — full control over dishes:
+  - **+ Add dish** — create a brand new menu item from scratch (name, category, description, and either a single price or multiple size options like Small/Medium/Big).
+  - **Edit** — change any existing dish's details.
+  - **Delete** — permanently remove a dish from the menu.
+  - Availability toggle and photo URL are still here too, unchanged.
+- **Customers** — every customer who's signed up, with their email, name, phone, and join date. A count at the top shows total signed-up customers.
+- **Sales** — total revenue **this week**, **this month**, and **all time**, calculated from orders marked "Delivered." A **Clear all delivered orders** button permanently deletes delivered orders so you can reset to zero after reconciling a period — this is irreversible by design, so use it deliberately (e.g. at the end of each week/month once you've noted the totals).
+
+All of this is staff-only, enforced the same way as before (`profiles.is_staff = true`).
+
+## Migration note (run once, safe — won't touch existing data)
+If your database is already live, run this in the SQL Editor before these new admin features will work:
+```sql
+alter table dishes add column if not exists image_url text;
+alter table deals add column if not exists image_url text;
+alter table profiles add column if not exists email text;
+
+create policy "Staff insert dishes" on dishes for insert with check (
+  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
+);
+create policy "Staff delete dishes" on dishes for delete using (
+  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
+);
+create policy "Staff read all profiles" on profiles for select using (
+  exists (select 1 from profiles p2 where p2.id = auth.uid() and p2.is_staff = true)
+);
+create policy "Staff delete orders" on orders for delete using (
+  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
+);
+```
+If any single line errors with "already exists," just skip that line and run the rest — it means that particular piece was already applied.
+
 ## Product photos (new)
 Dishes without a photo show a clean category-icon placeholder instead of a broken image or blank space — nothing looks unfinished while you're still adding photos.
 

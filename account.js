@@ -64,6 +64,12 @@ document.getElementById('authForm').addEventListener('submit', async (e) => {
 
   currentUser = data.user;
   currentProfile = currentUser ? await fetchProfile(currentUser.id) : null;
+  // Make sure the email is on record right away so this customer shows up
+  // in the admin Customers list even if they never open "My details".
+  if (currentUser) {
+    const { data: profile } = await upsertProfile(currentUser.id, { email: currentUser.email });
+    if (profile) currentProfile = profile;
+  }
   showAccount();
 });
 
@@ -84,6 +90,7 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!currentUser) return;
   const profile = {
+    email: currentUser.email,
     name: document.getElementById('profileName').value.trim(),
     phone: document.getElementById('profilePhone').value.trim(),
     default_address: document.getElementById('profileAddress').value.trim()

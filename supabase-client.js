@@ -171,3 +171,60 @@ export async function updateDishImage(dishId, imageUrl) {
     .single();
   return { data, error };
 }
+
+// dish = { name, category, desc, price, sizes } — `desc` is translated to the
+// `description` column here since 'desc' is a reserved SQL keyword.
+export async function createDish(dish) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { data, error } = await supabase.from('dishes').insert({
+    name: dish.name,
+    category: dish.category,
+    description: dish.desc ?? null,
+    price: dish.price ?? null,
+    sizes: dish.sizes ?? null,
+    is_available: true
+  }).select().single();
+  return { data, error };
+}
+
+export async function updateDish(dishId, dish) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { data, error } = await supabase.from('dishes').update({
+    name: dish.name,
+    category: dish.category,
+    description: dish.desc ?? null,
+    price: dish.price ?? null,
+    sizes: dish.sizes ?? null
+  }).eq('id', dishId).select().single();
+  return { data, error };
+}
+
+export async function deleteDish(dishId) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { error } = await supabase.from('dishes').delete().eq('id', dishId);
+  return { error };
+}
+
+export async function deleteOrder(orderId) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { error } = await supabase.from('orders').delete().eq('id', orderId);
+  return { error };
+}
+
+// Bulk "start fresh" action — wipes every order marked delivered, so sales
+// totals reset to zero after a period's been reconciled. This is irreversible.
+export async function clearDeliveredOrders() {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { error } = await supabase.from('orders').delete().eq('status', 'delivered');
+  return { error };
+}
+
+export async function fetchAllProfiles() {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('fetchAllProfiles:', error.message); return null; }
+  return data;
+}

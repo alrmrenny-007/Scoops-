@@ -1,6 +1,8 @@
 import {
   supabase, signIn, signOut, getCurrentUser, fetchProfile,
-  fetchAllOrders, updateOrderStatus, fetchDishes, toggleDishAvailability, updateDishImage
+  fetchAllOrders, updateOrderStatus, deleteOrder, clearDeliveredOrders,
+  fetchDishes, toggleDishAvailability, updateDishImage, createDish, updateDish, deleteDish,
+  fetchAllProfiles
 } from './supabase-client.js';
 
 const money = (n) => '₦' + n.toLocaleString('en-NG');
@@ -11,6 +13,7 @@ const NEXT_LABEL = { pending: 'Start preparing', preparing: 'Mark out for delive
 const loginScreen = document.getElementById('loginScreen');
 const dashboard = document.getElementById('dashboard');
 let pollTimer = null;
+let allDishes = []; // cached for the dish edit form
 
 /* ============ AUTH GATE ============ */
 async function boot() {
@@ -80,6 +83,11 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
     const target = tab.dataset.tab;
     document.getElementById('ordersPanel').hidden = target !== 'orders';
     document.getElementById('menuPanel').hidden = target !== 'menu';
+    document.getElementById('customersPanel').hidden = target !== 'customers';
+    document.getElementById('salesPanel').hidden = target !== 'sales';
+
+    if (target === 'customers') loadCustomers();
+    if (target === 'sales') loadSales();
   });
 });
 
@@ -115,6 +123,7 @@ function renderOrders(orders) {
         <div class="manage-card__actions">
           ${nextStatus ? `<button class="status-btn" data-advance="${o.id}" data-next="${nextStatus}">${NEXT_LABEL[o.status]}</button>` : ''}
           ${!isDone ? `<button class="status-btn status-btn--cancel" data-cancel="${o.id}">Cancel order</button>` : ''}
+          <button class="status-btn status-btn--cancel" data-delete-order="${o.id}">Delete</button>
         </div>
       </div>
     `;
@@ -128,6 +137,14 @@ function renderOrders(orders) {
       if (confirm('Cancel this order?')) setStatus(Number(btn.dataset.cancel), 'cancelled');
     });
   });
+  list.querySelectorAll('[data-delete-order]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Permanently delete this order? This cannot be undone.')) return;
+      const { error } = await deleteOrder(Number(btn.dataset.deleteOrder));
+      if (error) { alert('Could not delete: ' + error.message); return; }
+      loadOrders();
+    });
+  });
 }
 
 async function setStatus(orderId, status) {
@@ -138,10 +155,11 @@ async function setStatus(orderId, status) {
 
 document.getElementById('refreshOrders').addEventListener('click', loadOrders);
 
-/* ============ MENU AVAILABILITY & PHOTOS ============ */
+/* ============ MENU: AVAILABILITY, PHOTOS, CRUD ============ */
 async function loadMenu() {
   const dishes = await fetchDishes();
-  renderMenu(dishes ?? []);
+  allDishes = dishes ?? [];
+  renderMenu(allDishes);
 }
 
 function renderMenu(dishes) {
@@ -179,6 +197,10 @@ function renderMenu(dishes) {
         </div>
         <p class="photo-hint">Link must point directly to an image file (.jpg/.png) — not a Google Photos/Drive share page.</p>
         <p class="photo-warning" id="warn-${d.id}" hidden>⚠️ Couldn't load this link as an image — double-check it's a direct image URL.</p>
+        <div class="menu-row__actions">
+          <button class="status-btn" data-edit-dish="${d.id}">Edit</button>
+          <button class="status-btn status-btn--cancel" data-delete-dish="${d.id}">Delete</button>
+        </div>
       </div>
     `;
   }).join('');
@@ -222,6 +244,203 @@ function renderMenu(dishes) {
       loadMenu();
     });
   });
+
+  list.querySelectorAll('[data-edit-dish]').forEach(btn => {
+    btn.addEventListener('click', () => openDishForm(Number(btn.dataset.editDish)));
+  });
+
+  list.querySelectorAll('[data-delete-dish]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const dish = allDishes.find(d => d.id === Number(btn.dataset.deleteDish));
+      if (!confirm(`Delete "${dish?.name}" from the menu? This cannot be undone.`)) return;
+      const { error } = await deleteDish(Number(btn.dataset.deleteDish));
+      if (error) { alert('Could not delete: ' + error.message); return; }
+      loadMenu();
+    });
+  });
 }
+
+/* ============ DISH ADD/EDIT FORM ============ */
+const dishFormDrawer = document.getElementById('dishFormDrawer');
+const dishFormScrim = document.getElementById('dishFormScrim');
+const dishForm = document.getElementById('dishForm');
+const dfHasSizes = document.getElementById('dfHasSizes');
+const dfSingleBlock = document.getElementById('dfSingleBlock');
+const dfSizesBlock = document.getElementById('dfSizesBlock');
+const dfSizeRows = document.getElementById('dfSizeRows');
+let editingDishId = null;
+
+function openDishForm(dishId = null) {
+  editingDishId = dishId;
+  document.getElementById('dfError').hidden = true;
+  dishForm.reset();
+  dfSizeRows.innerHTML = '';
+
+  if (dishId) {
+    const dish = allDishes.find(d => d.id === dishId);
+    document.getElementById('dishFormTitle').textContent = 'Edit dish';
+    document.getElementById('dfName').value = dish.name || '';
+    document.getElementById('dfCategory').value = dish.category || '';
+    document.getElementById('dfDesc').value = dish.desc || '';
+    if (dish.sizes && dish.sizes.length) {
+      dfHasSizes.checked = true;
+      dish.sizes.forEach(s => addSizeRow(s.label, s.price));
+    } else {
+      dfHasSizes.checked = false;
+      document.getElementById('dfPrice').value = dish.price ?? '';
+    }
+  } else {
+    document.getElementById('dishFormTitle').textContent = 'Add dish';
+    addSizeRow('', '');
+  }
+
+  toggleSizeBlocks();
+  dishFormDrawer.classList.add('is-open');
+  dishFormScrim.classList.add('is-open');
+}
+
+function closeDishForm() {
+  dishFormDrawer.classList.remove('is-open');
+  dishFormScrim.classList.remove('is-open');
+}
+
+function toggleSizeBlocks() {
+  dfSingleBlock.hidden = dfHasSizes.checked;
+  dfSizesBlock.hidden = !dfHasSizes.checked;
+}
+dfHasSizes.addEventListener('change', toggleSizeBlocks);
+
+function addSizeRow(label = '', price = '') {
+  const row = document.createElement('div');
+  row.className = 'size-row';
+  row.innerHTML = `
+    <input type="text" class="size-row__label" placeholder="e.g. Small" value="${label}">
+    <input type="number" class="size-row__price" placeholder="Price" min="0" value="${price}">
+    <button type="button" class="size-row__remove" aria-label="Remove size">✕</button>
+  `;
+  row.querySelector('.size-row__remove').addEventListener('click', () => row.remove());
+  dfSizeRows.appendChild(row);
+}
+
+document.getElementById('dfAddSize').addEventListener('click', () => addSizeRow());
+document.getElementById('addDishBtn').addEventListener('click', () => openDishForm(null));
+document.getElementById('closeDishForm').addEventListener('click', closeDishForm);
+dishFormScrim.addEventListener('click', closeDishForm);
+
+dishForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errEl = document.getElementById('dfError');
+  errEl.hidden = true;
+
+  const name = document.getElementById('dfName').value.trim();
+  const category = document.getElementById('dfCategory').value.trim().toLowerCase();
+  const desc = document.getElementById('dfDesc').value.trim();
+
+  let price = null;
+  let sizes = null;
+
+  if (dfHasSizes.checked) {
+    sizes = Array.from(dfSizeRows.querySelectorAll('.size-row')).map(row => ({
+      label: row.querySelector('.size-row__label').value.trim(),
+      price: Number(row.querySelector('.size-row__price').value)
+    })).filter(s => s.label && !isNaN(s.price) && s.price >= 0);
+
+    if (!sizes.length) {
+      errEl.hidden = false; errEl.textContent = 'Add at least one size option with a label and price.';
+      return;
+    }
+  } else {
+    price = Number(document.getElementById('dfPrice').value);
+    if (isNaN(price) || price < 0) {
+      errEl.hidden = false; errEl.textContent = 'Enter a valid price.';
+      return;
+    }
+  }
+
+  const dish = { name, category, desc, price, sizes };
+  const saveBtn = document.getElementById('dfSaveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+
+  const { error } = editingDishId ? await updateDish(editingDishId, dish) : await createDish(dish);
+
+  saveBtn.disabled = false; saveBtn.textContent = 'Save dish';
+
+  if (error) {
+    errEl.hidden = false; errEl.textContent = error.message || 'Could not save this dish.';
+    return;
+  }
+
+  closeDishForm();
+  loadMenu();
+});
+
+/* ============ CUSTOMERS ============ */
+async function loadCustomers() {
+  const list = document.getElementById('customersList');
+  list.innerHTML = `<p class="cart-empty">Loading…</p>`;
+
+  const profiles = await fetchAllProfiles();
+  if (!profiles) {
+    list.innerHTML = `<p class="cart-empty">Could not load customers.</p>`;
+    document.getElementById('customerCount').textContent = '—';
+    return;
+  }
+
+  const withEmail = profiles.filter(p => p.email);
+  document.getElementById('customerCount').textContent = `${withEmail.length} signed-up customer${withEmail.length === 1 ? '' : 's'}`;
+
+  if (!withEmail.length) {
+    list.innerHTML = `<p class="cart-empty">No customers have signed up yet.</p>`;
+    return;
+  }
+
+  list.innerHTML = withEmail.map(p => {
+    const joined = new Date(p.created_at).toLocaleDateString('en-NG', { dateStyle: 'medium' });
+    return `
+      <div class="customer-card">
+        <div class="customer-card__email">${p.email}</div>
+        <div class="customer-card__meta">${p.name || 'No name saved'} · ${p.phone || 'No phone'}</div>
+        <div class="customer-card__meta">Joined ${joined}${p.is_staff ? ' · Staff' : ''}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ============ SALES ============ */
+async function loadSales() {
+  document.getElementById('salesWeek').textContent = '…';
+  document.getElementById('salesMonth').textContent = '…';
+  document.getElementById('salesAll').textContent = '…';
+
+  const orders = await fetchAllOrders();
+  const delivered = (orders ?? []).filter(o => o.status === 'delivered');
+
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  let weekTotal = 0, monthTotal = 0, allTotal = 0;
+  delivered.forEach(o => {
+    const created = new Date(o.created_at);
+    allTotal += o.total;
+    if (created >= startOfMonth) monthTotal += o.total;
+    if (created >= startOfWeek) weekTotal += o.total;
+  });
+
+  document.getElementById('salesWeek').textContent = money(weekTotal);
+  document.getElementById('salesMonth').textContent = money(monthTotal);
+  document.getElementById('salesAll').textContent = money(allTotal);
+}
+
+document.getElementById('clearDeliveredBtn').addEventListener('click', async () => {
+  if (!confirm('Permanently delete every order marked "Delivered"? This cannot be undone and will reset your sales totals to zero.')) return;
+  const { error } = await clearDeliveredOrders();
+  if (error) { alert('Could not clear orders: ' + error.message); return; }
+  loadSales();
+  loadOrders();
+});
 
 boot();

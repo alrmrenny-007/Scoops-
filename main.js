@@ -512,6 +512,7 @@ document.getElementById('savePromptForm').addEventListener('submit', async (e) =
   currentUser = data.user;
   if (currentUser && lastOrderCustomer) {
     const { data: profile } = await upsertProfile(currentUser.id, {
+      email: currentUser.email,
       name: lastOrderCustomer.name,
       phone: lastOrderCustomer.phone,
       default_address: lastOrderCustomer.address

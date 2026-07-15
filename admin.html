@@ -6,8 +6,8 @@
 <title>Staff Dashboard — Scoops × Mr. Jollof</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5">
-<link rel="stylesheet" href="admin.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="admin.css?v=6">
 </head>
 <body data-theme="dark">
 
@@ -50,6 +50,8 @@
   <nav class="admin-tabs">
     <button class="admin-tab is-active" data-tab="orders">Orders</button>
     <button class="admin-tab" data-tab="menu">Menu</button>
+    <button class="admin-tab" data-tab="customers">Customers</button>
+    <button class="admin-tab" data-tab="sales">Sales</button>
   </nav>
 
   <!-- ORDERS TAB -->
@@ -64,14 +66,74 @@
   <!-- MENU TAB -->
   <section class="admin-panel" id="menuPanel" hidden>
     <div class="admin-panel__head">
-      <h2>Menu availability</h2>
+      <h2>Menu</h2>
+      <button class="status-btn" id="addDishBtn">+ Add dish</button>
     </div>
     <div id="adminMenuList" class="admin-list"></div>
   </section>
 
+  <!-- CUSTOMERS TAB -->
+  <section class="admin-panel" id="customersPanel" hidden>
+    <div class="admin-panel__head"><h2>Customers</h2></div>
+    <p class="stat-highlight" id="customerCount">—</p>
+    <div id="customersList" class="admin-list"></div>
+  </section>
+
+  <!-- SALES TAB -->
+  <section class="admin-panel" id="salesPanel" hidden>
+    <div class="admin-panel__head"><h2>Sales</h2></div>
+    <div class="sales-grid">
+      <div class="sales-stat"><span class="sales-stat__label">This week</span><span class="sales-stat__value" id="salesWeek">—</span></div>
+      <div class="sales-stat"><span class="sales-stat__label">This month</span><span class="sales-stat__value" id="salesMonth">—</span></div>
+      <div class="sales-stat"><span class="sales-stat__label">All time</span><span class="sales-stat__value" id="salesAll">—</span></div>
+    </div>
+    <p class="cart-empty" style="margin-top:10px;">Based on orders marked "Delivered". Cancelled orders aren't counted.</p>
+    <button class="status-btn status-btn--cancel" id="clearDeliveredBtn" style="margin-top:20px;">Clear all delivered orders</button>
+    <p class="photo-hint" style="margin-top:8px;">Permanently deletes delivered orders so sales reset to zero. Use this after you've reconciled a period — it can't be undone.</p>
+  </section>
+
 </div>
 
-<script type="module" src="supabase-client.js?v=4"></script>
-<script type="module" src="admin.js?v=5"></script>
+<!-- DISH ADD/EDIT FORM -->
+<div class="drawer-scrim" id="dishFormScrim"></div>
+<aside class="cart-drawer" id="dishFormDrawer" aria-hidden="true">
+  <div class="cart-drawer__head">
+    <h3 id="dishFormTitle">Add dish</h3>
+    <button class="icon-btn" id="closeDishForm" aria-label="Close">✕</button>
+  </div>
+  <form class="cart-drawer__items checkout-form" id="dishForm">
+    <label class="form-field">
+      <span>Name</span>
+      <input type="text" id="dfName" required placeholder="e.g. Beef Burger">
+    </label>
+    <label class="form-field">
+      <span>Category</span>
+      <input type="text" id="dfCategory" required placeholder="e.g. burger, pizza, drinks">
+    </label>
+    <label class="form-field">
+      <span>Description</span>
+      <textarea id="dfDesc" rows="2" placeholder="Short description shown on the menu"></textarea>
+    </label>
+    <label class="form-field form-field--row">
+      <input type="checkbox" id="dfHasSizes" style="width:auto;">
+      <span>Has size options (Small/Medium/Big, Single/Double, etc.)</span>
+    </label>
+    <div id="dfSingleBlock" class="form-field">
+      <span>Price (₦)</span>
+      <input type="number" id="dfPrice" min="0" placeholder="e.g. 1500">
+    </div>
+    <div id="dfSizesBlock" hidden>
+      <div id="dfSizeRows" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <button type="button" class="link-btn" id="dfAddSize" style="margin-top:8px;">+ Add size option</button>
+    </div>
+    <p class="form-error" id="dfError" hidden></p>
+  </form>
+  <div class="cart-drawer__footer">
+    <button class="btn btn--primary btn--block" id="dfSaveBtn" form="dishForm" type="submit">Save dish</button>
+  </div>
+</aside>
+
+<script type="module" src="supabase-client.js?v=5"></script>
+<script type="module" src="admin.js?v=7"></script>
 </body>
 </html>
