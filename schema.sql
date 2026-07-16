@@ -80,41 +80,37 @@ create policy "Users read own profile" on profiles for select using (auth.uid() 
 create policy "Users insert own profile" on profiles for insert with check (auth.uid() = id);
 create policy "Users update own profile" on profiles for update using (auth.uid() = id);
 
--- Helper check used below: is the current user a staff member?
--- (inlined as a subquery in each policy — Postgres doesn't need a separate function)
+-- Helper function: is the current user a staff member?
+-- SECURITY DEFINER makes this bypass RLS internally — required because a policy
+-- ON profiles that queries profiles again (to check is_staff) would otherwise
+-- recurse into itself infinitely ("infinite recursion detected in policy").
+create or replace function public.is_staff_user()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce((select is_staff from profiles where id = auth.uid()), false);
+$$;
 
--- Orders: customers see only their own; staff (is_staff = true) see and update everything
+-- Orders: customers see only their own; staff see and update everything
 create policy "Users read own orders" on orders for select using (
-  auth.uid() = user_id
-  or exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
+  auth.uid() = user_id or is_staff_user()
 );
 create policy "Users insert own orders" on orders for insert with check (
   auth.uid() = user_id or user_id is null
 );
-create policy "Staff update orders" on orders for update using (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
-);
+create policy "Staff update orders" on orders for update using (is_staff_user());
+create policy "Staff delete orders" on orders for delete using (is_staff_user());
 
--- Dishes: only staff can toggle availability / edit
-create policy "Staff update dishes" on dishes for update using (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
-);
-create policy "Staff insert dishes" on dishes for insert with check (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
-);
-create policy "Staff delete dishes" on dishes for delete using (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
-);
+-- Dishes: only staff can create/edit/delete
+create policy "Staff update dishes" on dishes for update using (is_staff_user());
+create policy "Staff insert dishes" on dishes for insert with check (is_staff_user());
+create policy "Staff delete dishes" on dishes for delete using (is_staff_user());
 
 -- Staff can see every customer profile (for the admin Customers list)
-create policy "Staff read all profiles" on profiles for select using (
-  exists (select 1 from profiles p2 where p2.id = auth.uid() and p2.is_staff = true)
-);
-
--- Staff can delete orders (used for cleanup / clearing completed sales)
-create policy "Staff delete orders" on orders for delete using (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
-);
+create policy "Staff read all profiles" on profiles for select using (is_staff_user());
 
 -- ---------- SEED: DISHES ----------
 insert into dishes (name, category, description, price, sizes) values
@@ -200,21 +196,25 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 --   alter table deals add column if not exists image_url text;
 --   alter table profiles add column if not exists email text;
 --
+--   create or replace function public.is_staff_user()
+--   returns boolean language sql security definer set search_path = public stable
+--   as $$ select coalesce((select is_staff from profiles where id = auth.uid()), false); $$;
+--
 --   drop policy if exists "Staff insert dishes" on dishes;
---   create policy "Staff insert dishes" on dishes for insert with check (
---     exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
---   );
+--   create policy "Staff insert dishes" on dishes for insert with check (is_staff_user());
 --   drop policy if exists "Staff delete dishes" on dishes;
---   create policy "Staff delete dishes" on dishes for delete using (
---     exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
---   );
+--   create policy "Staff delete dishes" on dishes for delete using (is_staff_user());
+--   drop policy if exists "Staff update dishes" on dishes;
+--   create policy "Staff update dishes" on dishes for update using (is_staff_user());
 --   drop policy if exists "Staff read all profiles" on profiles;
---   create policy "Staff read all profiles" on profiles for select using (
---     exists (select 1 from profiles p2 where p2.id = auth.uid() and p2.is_staff = true)
---   );
+--   create policy "Staff read all profiles" on profiles for select using (is_staff_user());
 --   drop policy if exists "Staff delete orders" on orders;
---   create policy "Staff delete orders" on orders for delete using (
---     exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
+--   create policy "Staff delete orders" on orders for delete using (is_staff_user());
+--   drop policy if exists "Staff update orders" on orders;
+--   create policy "Staff update orders" on orders for update using (is_staff_user());
+--   drop policy if exists "Users read own orders" on orders;
+--   create policy "Users read own orders" on orders for select using (
+--     auth.uid() = user_id or is_staff_user()
 --   );
 --
 -- ============================================================

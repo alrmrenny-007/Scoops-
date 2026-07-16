@@ -177,7 +177,13 @@ function renderDishes(list) {
   `).join('');
 
   grid.querySelectorAll('[data-add]').forEach(btn => {
-    btn.addEventListener('click', () => addToCart(Number(btn.dataset.add)));
+    btn.addEventListener('click', (e) => { e.stopPropagation(); addToCart(Number(btn.dataset.add)); });
+  });
+  grid.querySelectorAll('.size-select').forEach(sel => {
+    sel.addEventListener('click', (e) => e.stopPropagation());
+  });
+  grid.querySelectorAll('.d-card').forEach(card => {
+    card.addEventListener('click', () => openProductDetail(Number(card.dataset.dish)));
   });
 }
 
@@ -194,6 +200,168 @@ function renderBirthdays() {
     </div>
   `).join('');
 }
+
+/* ============ HERO CAROUSEL ============ */
+let heroIndex = 0;
+let heroTimer = null;
+
+function renderHeroCarousel() {
+  const track = document.getElementById('heroTrack');
+  const dotsEl = document.getElementById('heroDots');
+
+  const brandSlide = `
+    <div class="hero-slide" style="background:linear-gradient(155deg, var(--red) 0%, #A81811 100%);">
+      <div class="hero-slide__ember" aria-hidden="true"></div>
+      <span class="hero__eyebrow">Big Flavour · Great Value · Everyday</span>
+      <h1 class="hero__title">Chops, drinks<br><span class="ink">& jollof done right.</span></h1>
+      <p class="hero__sub">Shawarma, pizza, burgers, and the jollof everyone's talking about.</p>
+      <div class="hero__ctas">
+        <a href="#deals" class="btn btn--primary">See today's deals</a>
+        <a href="#menu" class="btn btn--outline">Browse menu</a>
+      </div>
+    </div>
+  `;
+
+  const dealSlides = deals.slice(0, 2).map(d => `
+    <div class="hero-slide" style="background:linear-gradient(155deg, #2E1815 0%, #170907 100%);">
+      <div class="hero-slide__ember" aria-hidden="true"></div>
+      <span class="hero__eyebrow">${d.badge}</span>
+      <h1 class="hero__title">${d.name}</h1>
+      <p class="hero__sub">${d.items}</p>
+      <div class="hero__ctas">
+        <button class="btn btn--primary" data-hero-deal="${d.id}">Order now — ${money(d.price)}</button>
+      </div>
+    </div>
+  `);
+
+  const slides = [brandSlide, ...dealSlides];
+  track.innerHTML = slides.join('');
+  dotsEl.innerHTML = slides.map((_, i) => `<span class="hero-dot ${i === 0 ? 'is-active' : ''}" data-dot="${i}"></span>`).join('');
+
+  track.querySelectorAll('[data-hero-deal]').forEach(btn => {
+    btn.addEventListener('click', () => addDealToCart(btn.dataset.heroDeal));
+  });
+  dotsEl.querySelectorAll('[data-dot]').forEach(dot => {
+    dot.addEventListener('click', () => goToHeroSlide(Number(dot.dataset.dot)));
+  });
+
+  clearInterval(heroTimer);
+  heroTimer = setInterval(() => goToHeroSlide((heroIndex + 1) % slides.length), 4500);
+}
+
+function goToHeroSlide(i) {
+  heroIndex = i;
+  document.getElementById('heroTrack').style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.hero-dot').forEach((d, idx) => d.classList.toggle('is-active', idx === i));
+}
+
+/* ============ TOP CHOICES ============ */
+function renderTopChoices() {
+  const row = document.getElementById('topChoicesRow');
+  const picks = dishes.slice(0, 8);
+  row.innerHTML = picks.map(d => `
+    <div class="tc-card" data-dish="${d.id}">
+      ${d.image_url
+        ? `<img class="tc-card__img" src="${d.image_url}" alt="${d.name}" loading="lazy" onerror="this.outerHTML='<div class=&quot;tc-card__img tc-card__img--placeholder&quot;>${CATEGORY_ICON[d.category] || '🍽️'}</div>'">`
+        : `<div class="tc-card__img tc-card__img--placeholder">${CATEGORY_ICON[d.category] || '🍽️'}</div>`
+      }
+      <div class="tc-card__name">${d.name}</div>
+      <div class="tc-card__price">${d.sizes ? 'From ' + money(d.sizes[0].price) : money(d.price)}</div>
+    </div>
+  `).join('');
+
+  row.querySelectorAll('.tc-card').forEach(card => {
+    card.addEventListener('click', () => openProductDetail(Number(card.dataset.dish)));
+  });
+}
+
+/* ============ PRODUCT DETAIL OVERLAY ============ */
+const favorites = new Set(JSON.parse(localStorage.getItem('scoops_favorites') || '[]'));
+let pdSelectedSizeIndex = 0;
+
+function openProductDetail(dishId) {
+  const dish = dishes.find(d => d.id === dishId);
+  if (!dish) return;
+  pdSelectedSizeIndex = 0;
+
+  const media = document.getElementById('pdMedia');
+  const icon = CATEGORY_ICON[dish.category] || '🍽️';
+  media.innerHTML = `
+    <button class="pd-float-btn pd-back" id="pdBack" aria-label="Back">←</button>
+    <button class="pd-float-btn pd-fav" id="pdFav" aria-label="Save favorite">${favorites.has(dishId) ? '♥' : '♡'}</button>
+    ${dish.image_url ? `<img src="${dish.image_url}" alt="${dish.name}" onerror="this.remove()">` : `<span>${icon}</span>`}
+  `;
+  document.getElementById('pdFav').classList.toggle('is-active', favorites.has(dishId));
+  document.getElementById('pdBack').addEventListener('click', closeProductDetail);
+  document.getElementById('pdFav').addEventListener('click', () => toggleFavorite(dishId));
+
+  document.getElementById('pdCat').textContent = dish.category;
+  document.getElementById('pdName').textContent = dish.name;
+  document.getElementById('pdDesc').textContent = dish.desc;
+
+  const sizesWrap = document.getElementById('pdSizesWrap');
+  if (dish.sizes) {
+    sizesWrap.hidden = false;
+    document.getElementById('pdSizeRow').innerHTML = dish.sizes.map((s, i) => `
+      <button class="pd-size-pill ${i === 0 ? 'is-selected' : ''}" data-size-idx="${i}">${s.label} — ${money(s.price)}</button>
+    `).join('');
+    document.getElementById('pdSizeRow').querySelectorAll('.pd-size-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        pdSelectedSizeIndex = Number(pill.dataset.sizeIdx);
+        document.querySelectorAll('.pd-size-pill').forEach(p => p.classList.remove('is-selected'));
+        pill.classList.add('is-selected');
+        document.getElementById('pdPrice').textContent = money(dish.sizes[pdSelectedSizeIndex].price);
+      });
+    });
+    document.getElementById('pdPrice').textContent = money(dish.sizes[0].price);
+  } else {
+    sizesWrap.hidden = true;
+    document.getElementById('pdPrice').textContent = money(dish.price);
+  }
+
+  const similar = dishes.filter(d => d.category === dish.category && d.id !== dish.id).slice(0, 4);
+  const similarWrap = document.getElementById('pdSimilarWrap');
+  if (similar.length) {
+    similarWrap.hidden = false;
+    document.getElementById('pdSimilarRow').innerHTML = similar.map(d => `
+      <div class="tc-card" data-similar="${d.id}">
+        ${d.image_url
+          ? `<img class="tc-card__img" src="${d.image_url}" alt="${d.name}" loading="lazy" onerror="this.outerHTML='<div class=&quot;tc-card__img tc-card__img--placeholder&quot;>${CATEGORY_ICON[d.category] || '🍽️'}</div>'">`
+          : `<div class="tc-card__img tc-card__img--placeholder">${CATEGORY_ICON[d.category] || '🍽️'}</div>`
+        }
+        <div class="tc-card__name">${d.name}</div>
+        <div class="tc-card__price">${d.sizes ? 'From ' + money(d.sizes[0].price) : money(d.price)}</div>
+      </div>
+    `).join('');
+    document.getElementById('pdSimilarRow').querySelectorAll('[data-similar]').forEach(card => {
+      card.addEventListener('click', () => openProductDetail(Number(card.dataset.similar)));
+    });
+  } else {
+    similarWrap.hidden = true;
+  }
+
+  document.getElementById('pdAddBtn').onclick = () => {
+    addToCart(dishId, dish.sizes ? pdSelectedSizeIndex : undefined);
+    closeProductDetail();
+  };
+
+  document.getElementById('productDetail').hidden = false;
+  document.getElementById('productDetail').scrollTop = 0;
+}
+
+function closeProductDetail() {
+  document.getElementById('productDetail').hidden = true;
+}
+
+function toggleFavorite(dishId) {
+  if (favorites.has(dishId)) favorites.delete(dishId); else favorites.add(dishId);
+  localStorage.setItem('scoops_favorites', JSON.stringify([...favorites]));
+  const favBtn = document.getElementById('pdFav');
+  favBtn.textContent = favorites.has(dishId) ? '♥' : '♡';
+  favBtn.classList.toggle('is-active', favorites.has(dishId));
+}
+
+document.getElementById('bellBtn').addEventListener('click', openOrders);
 
 /* ============ FILTERING ============ */
 function applyFilters() {
@@ -219,15 +387,19 @@ document.getElementById('categoryRow').addEventListener('click', (e) => {
 });
 
 /* ============ CART ============ */
-function addToCart(dishId) {
+function addToCart(dishId, presetSizeIndex) {
   const dish = dishes.find(d => d.id === dishId);
   if (!dish) return;
 
   let price = dish.price;
   let sizeLabel = null;
   if (dish.sizes) {
-    const select = document.querySelector(`[data-size-for="${dishId}"]`);
-    const opt = dish.sizes[Number(select.value)];
+    let idx = presetSizeIndex;
+    if (idx === undefined) {
+      const select = document.querySelector(`[data-size-for="${dishId}"]`);
+      idx = select ? Number(select.value) : 0;
+    }
+    const opt = dish.sizes[idx] || dish.sizes[0];
     price = opt.price;
     sizeLabel = opt.label;
   }
@@ -235,7 +407,7 @@ function addToCart(dishId) {
   const lineId = dishId + '::' + (sizeLabel ?? '');
   const line = cart.find(c => c.lineId === lineId);
   if (line) line.qty += 1;
-  else cart.push({ lineId, id: dish.id, name: dish.name, size: sizeLabel, price, qty: 1 });
+  else cart.push({ lineId, id: dish.id, name: dish.name, size: sizeLabel, price, qty: 1, image_url: dish.image_url, category: dish.category });
 
   saveCart(); renderCart(); openCart();
 }
@@ -246,7 +418,7 @@ function addDealToCart(dealId) {
   const lineId = 'deal::' + dealId;
   const line = cart.find(c => c.lineId === lineId);
   if (line) line.qty += 1;
-  else cart.push({ lineId, id: dealId, name: deal.name, size: 'Combo', price: deal.price, qty: 1 });
+  else cart.push({ lineId, id: dealId, name: deal.name, size: 'Combo', price: deal.price, qty: 1, image_url: deal.image_url, category: null });
   saveCart(); renderCart(); openCart();
 }
 
@@ -258,40 +430,58 @@ function changeQty(lineId, delta) {
   saveCart(); renderCart();
 }
 
+function removeLine(lineId) {
+  cart = cart.filter(c => c.lineId !== lineId);
+  saveCart(); renderCart();
+}
+
 function saveCart() { localStorage.setItem('scoops_cart', JSON.stringify(cart)); }
+
+function cartLineImageHtml(c) {
+  const icon = CATEGORY_ICON[c.category] || '🍽️';
+  if (c.image_url) return `<img class="cart-line__img" src="${c.image_url}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;cart-line__img cart-line__img--placeholder&quot;>${icon}</div>'">`;
+  return `<div class="cart-line__img cart-line__img--placeholder">${icon}</div>`;
+}
 
 function renderCart() {
   const itemsEl = document.getElementById('cartItems');
   const countEl = document.getElementById('cartCount');
   const totalEl = document.getElementById('cartTotal');
+  const headingEl = document.getElementById('cartHeading');
 
   const totalQty = cart.reduce((s, c) => s + c.qty, 0);
   const totalPrice = cart.reduce((s, c) => s + c.qty * c.price, 0);
   countEl.textContent = totalQty;
   totalEl.textContent = money(totalPrice);
+  headingEl.textContent = totalQty ? `My Cart · ${totalQty} item${totalQty === 1 ? '' : 's'}` : 'My Cart';
 
   if (!cart.length) {
-    itemsEl.innerHTML = `<p class="cart-empty">Your ticket is empty. Add something good.</p>`;
+    itemsEl.innerHTML = `<p class="cart-empty">Your cart is empty. Add something good.</p>`;
     return;
   }
 
   itemsEl.innerHTML = cart.map(c => `
     <div class="cart-line">
+      ${cartLineImageHtml(c)}
       <div class="cart-line__info">
         <div class="cart-line__name">${c.name}</div>
         ${c.size ? `<div class="cart-line__size">${c.size}</div>` : ''}
-        <div class="cart-line__price">${money(c.price)}</div>
+        <div class="cart-line__price">${money(c.price * c.qty)}</div>
       </div>
-      <div class="cart-line__qty">
-        <button class="qty-btn" data-dec="${c.lineId}">−</button>
-        <span>${c.qty}</span>
-        <button class="qty-btn" data-inc="${c.lineId}">+</button>
+      <div class="cart-line__side">
+        <button class="cart-line__trash" data-remove="${c.lineId}" aria-label="Remove item">🗑</button>
+        <div class="cart-line__qty">
+          <button class="qty-btn" data-dec="${c.lineId}">−</button>
+          <span>${c.qty}</span>
+          <button class="qty-btn" data-inc="${c.lineId}">+</button>
+        </div>
       </div>
     </div>
   `).join('');
 
   itemsEl.querySelectorAll('[data-inc]').forEach(b => b.addEventListener('click', () => changeQty(b.dataset.inc, 1)));
   itemsEl.querySelectorAll('[data-dec]').forEach(b => b.addEventListener('click', () => changeQty(b.dataset.dec, -1)));
+  itemsEl.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => removeLine(b.dataset.remove)));
 }
 
 /* ============ CART DRAWER OPEN/CLOSE ============ */
@@ -559,8 +749,10 @@ async function init() {
     if (currentUser) currentProfile = await fetchProfile(currentUser.id);
   }
 
+  renderHeroCarousel();
   renderDeals();
   renderDishes(dishes);
+  renderTopChoices();
   renderBirthdays();
   renderCart();
 }
