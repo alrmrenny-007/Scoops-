@@ -6,6 +6,9 @@ import {
 
 const money = (n) => '₦' + n.toLocaleString('en-NG');
 
+// Safe GSAP wrapper — animations degrade gracefully if the CDN script hasn't loaded yet.
+const anim = (fn) => { if (typeof gsap !== 'undefined') fn(); };
+
 /* ============ DEMO DATA — Scoops Chops & Drinks × Mr. Jollof ============ */
 // Items with multiple sizes use `sizes: [{label, price}]`. Single-price items use `price`.
 const DEMO_DISHES = [
@@ -135,6 +138,7 @@ function renderDeals() {
   grid.querySelectorAll('[data-add-deal]').forEach(btn => {
     btn.addEventListener('click', () => addDealToCart(btn.dataset.addDeal));
   });
+  anim(() => gsap.from(grid.children, { opacity: 0, y: 14, duration: 0.4, stagger: 0.05, ease: 'power2.out' }));
 }
 
 const CATEGORY_ICON = {
@@ -185,6 +189,7 @@ function renderDishes(list) {
   grid.querySelectorAll('.d-card').forEach(card => {
     card.addEventListener('click', () => openProductDetail(Number(card.dataset.dish)));
   });
+  anim(() => gsap.from(grid.children, { opacity: 0, y: 14, duration: 0.4, stagger: 0.04, ease: 'power2.out' }));
 }
 
 /* ============ RENDER: BIRTHDAY PACKAGES ============ */
@@ -199,6 +204,7 @@ function renderBirthdays() {
       <a class="btn btn--primary" href="https://wa.me/2347087662962?text=${encodeURIComponent('Hi, I want to enquire about the ' + b.tier + ' birthday package.')}" target="_blank" rel="noopener">Enquire on WhatsApp</a>
     </div>
   `).join('');
+  anim(() => gsap.from(grid.children, { opacity: 0, y: 14, duration: 0.4, stagger: 0.08, ease: 'power2.out' }));
 }
 
 /* ============ HERO CAROUSEL ============ */
@@ -251,7 +257,12 @@ function renderHeroCarousel() {
 
 function goToHeroSlide(i) {
   heroIndex = i;
-  document.getElementById('heroTrack').style.transform = `translateX(-${i * 100}%)`;
+  const track = document.getElementById('heroTrack');
+  if (typeof gsap !== 'undefined') {
+    gsap.to(track, { xPercent: -i * 100, duration: 0.55, ease: 'power2.inOut' });
+  } else {
+    track.style.transform = `translateX(-${i * 100}%)`;
+  }
   document.querySelectorAll('.hero-dot').forEach((d, idx) => d.classList.toggle('is-active', idx === i));
 }
 
@@ -273,6 +284,7 @@ function renderTopChoices() {
   row.querySelectorAll('.tc-card').forEach(card => {
     card.addEventListener('click', () => openProductDetail(Number(card.dataset.dish)));
   });
+  anim(() => gsap.from(row.children, { opacity: 0, x: 20, duration: 0.4, stagger: 0.06, ease: 'power2.out' }));
 }
 
 /* ============ PRODUCT DETAIL OVERLAY ============ */
@@ -347,10 +359,16 @@ function openProductDetail(dishId) {
 
   document.getElementById('productDetail').hidden = false;
   document.getElementById('productDetail').scrollTop = 0;
+  anim(() => gsap.fromTo('#productDetail', { y: '4%', opacity: 0 }, { y: '0%', opacity: 1, duration: 0.35, ease: 'power3.out' }));
 }
 
 function closeProductDetail() {
-  document.getElementById('productDetail').hidden = true;
+  const el = document.getElementById('productDetail');
+  if (typeof gsap !== 'undefined') {
+    gsap.to(el, { y: '4%', opacity: 0, duration: 0.25, ease: 'power2.in', onComplete: () => { el.hidden = true; gsap.set(el, { clearProps: 'all' }); } });
+  } else {
+    el.hidden = true;
+  }
 }
 
 function toggleFavorite(dishId) {
@@ -454,6 +472,7 @@ function renderCart() {
   countEl.textContent = totalQty;
   totalEl.textContent = money(totalPrice);
   headingEl.textContent = totalQty ? `My Cart · ${totalQty} item${totalQty === 1 ? '' : 's'}` : 'My Cart';
+  anim(() => gsap.fromTo(countEl, { scale: 1 }, { scale: 1.4, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.inOut' }));
 
   if (!cart.length) {
     itemsEl.innerHTML = `<p class="cart-empty">Your cart is empty. Add something good.</p>`;

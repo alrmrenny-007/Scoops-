@@ -126,7 +126,7 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
 .hero-carousel{
   position:relative; margin:18px 20px 0; border-radius:var(--radius-lg); overflow:hidden;
 }
-.hero-carousel__track{display:flex; transition:transform .45s ease;}
+.hero-carousel__track{display:flex;}
 .hero-slide{
   flex:0 0 100%; padding:34px 22px 44px; min-height:210px; display:flex; flex-direction:column;
   justify-content:center; color:#fff; position:relative; overflow:hidden;
