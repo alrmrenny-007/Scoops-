@@ -98,6 +98,10 @@ $$;
 create policy "Users read own orders" on orders for select using (
   auth.uid() = user_id or is_staff_user()
 );
+-- Guest checkouts (no account) have user_id = NULL. "auth.uid() = NULL" is never
+-- true in SQL (even for the same guest), so without this, a guest's own order
+-- couldn't be read back immediately after being placed — this fixes that.
+create policy "Guest orders are readable" on orders for select using (user_id is null);
 create policy "Users insert own orders" on orders for insert with check (
   auth.uid() = user_id or user_id is null
 );
@@ -216,6 +220,8 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 --   create policy "Users read own orders" on orders for select using (
 --     auth.uid() = user_id or is_staff_user()
 --   );
+--   drop policy if exists "Guest orders are readable" on orders;
+--   create policy "Guest orders are readable" on orders for select using (user_id is null);
 --
 -- ============================================================
 

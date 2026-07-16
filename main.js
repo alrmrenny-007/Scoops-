@@ -573,7 +573,7 @@ checkoutForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = false; submitBtn.textContent = 'Place order';
 
   if (error) {
-    alert('Something went wrong placing your order: ' + error);
+    alert('Something went wrong placing your order: ' + (error.message || JSON.stringify(error)));
     return;
   }
 
