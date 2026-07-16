@@ -387,6 +387,18 @@ checkoutForm.addEventListener('submit', async (e) => {
     ${customer.fulfilment === 'pickup' ? 'Pickup at Uke-Wende St, Makurdi' : 'Delivering to: ' + (customer.address || '—')}
   `;
 
+  const waLines = [
+    `New order #${order.id}`,
+    ...order.items.map(i => `${i.qty}× ${i.name}${i.size ? ' (' + i.size + ')' : ''}`),
+    `Total: ${money(total)}`,
+    `Name: ${customer.name || '—'}`,
+    `Phone: ${customer.phone || '—'}`,
+    customer.fulfilment === 'pickup' ? 'Pickup at store' : `Deliver to: ${customer.address || '—'}`,
+  ];
+  if (customer.notes) waLines.push(`Notes: ${customer.notes}`);
+  document.getElementById('whatsappOrderBtn').href =
+    `https://wa.me/2347087662962?text=${encodeURIComponent(waLines.join('\n'))}`;
+
   // Only nudge guests — logged-in customers already have their details saved.
   document.getElementById('savePrompt').hidden = !!currentUser;
 

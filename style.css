@@ -148,6 +148,7 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
 .btn{display:inline-flex; align-items:center; justify-content:center; padding:14px 24px; border-radius:30px; font-weight:700; font-size:.95rem;}
 .btn--primary{background:var(--gold); color:#2A1400; box-shadow:0 10px 24px -10px rgba(255,199,44,.6);}
 .btn--outline{background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,.6);}
+.btn--whatsapp{background:#25D366; color:#fff; margin-bottom:10px; text-decoration:none;}
 .btn--block{width:100%;}
 .hero__ctas{display:flex; gap:10px; flex-wrap:wrap;}
 
