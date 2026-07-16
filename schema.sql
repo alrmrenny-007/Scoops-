@@ -193,23 +193,26 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 -- ============================================================
 -- ALREADY HAVE A LIVE DATABASE? Don't re-run this whole file —
 -- it would drop and recreate every table, wiping your real orders
--- and staff account. Run migrations below once (safe even if some
--- already ran — "if not exists" columns won't error; if a policy
--- already exists and errors, just skip that one line and continue):
+-- and staff account. This block is safe to run as many times as
+-- you need — every piece checks for existing state first:
 --
 --   alter table dishes add column if not exists image_url text;
 --   alter table deals add column if not exists image_url text;
 --   alter table profiles add column if not exists email text;
 --
+--   drop policy if exists "Staff insert dishes" on dishes;
 --   create policy "Staff insert dishes" on dishes for insert with check (
 --     exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
 --   );
+--   drop policy if exists "Staff delete dishes" on dishes;
 --   create policy "Staff delete dishes" on dishes for delete using (
 --     exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
 --   );
+--   drop policy if exists "Staff read all profiles" on profiles;
 --   create policy "Staff read all profiles" on profiles for select using (
 --     exists (select 1 from profiles p2 where p2.id = auth.uid() and p2.is_staff = true)
 --   );
+--   drop policy if exists "Staff delete orders" on orders;
 --   create policy "Staff delete orders" on orders for delete using (
 --     exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_staff = true)
 --   );
