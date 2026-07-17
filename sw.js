@@ -1,7 +1,7 @@
 // Service worker for Scoops — handles offline caching (so the site can be
 // installed as an app) and push notifications for the staff dashboard.
 
-const CACHE_NAME = 'scoops-cache-v1';
+const CACHE_NAME = 'scoops-cache-v2';
 const PRECACHE_URLS = [
   '/', '/index.html', '/style.css', '/manifest.json',
   '/icons/icon-192.png', '/icons/icon-512.png'
@@ -25,6 +25,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  // Only manage requests to this site itself. Cross-origin requests (Supabase's
+  // API, Google Fonts, the GSAP/Supabase CDN scripts) must be left completely
+  // alone — intercepting those broke live data loading entirely.
+  if (new URL(req.url).origin !== self.location.origin) return;
 
   // Page loads: try the network first (so a deploy update shows up right away),
   // fall back to the cache — or the cached home page — if offline.
