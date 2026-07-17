@@ -64,12 +64,27 @@ create table orders (
   created_at timestamptz default now()
 );
 
+create table push_subscriptions (
+  id bigint generated always as identity primary key,
+  user_id uuid references auth.users(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth_key text not null,
+  created_at timestamptz default now()
+);
+
 -- ---------- ROW LEVEL SECURITY ----------
 alter table dishes enable row level security;
 alter table deals enable row level security;
 alter table birthday_packages enable row level security;
 alter table profiles enable row level security;
 alter table orders enable row level security;
+alter table push_subscriptions enable row level security;
+
+-- Staff manage their own push subscription (the notify-new-order Edge Function
+-- reads all of these using the service role key, which bypasses RLS)
+create policy "Staff manage own push subscription" on push_subscriptions for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "Public read dishes" on dishes for select using (true);
 create policy "Public read deals" on deals for select using (true);
@@ -222,6 +237,19 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 --   );
 --   drop policy if exists "Guest orders are readable" on orders;
 --   create policy "Guest orders are readable" on orders for select using (user_id is null);
+--
+--   create table if not exists push_subscriptions (
+--     id bigint generated always as identity primary key,
+--     user_id uuid references auth.users(id) on delete cascade,
+--     endpoint text not null unique,
+--     p256dh text not null,
+--     auth_key text not null,
+--     created_at timestamptz default now()
+--   );
+--   alter table push_subscriptions enable row level security;
+--   drop policy if exists "Staff manage own push subscription" on push_subscriptions;
+--   create policy "Staff manage own push subscription" on push_subscriptions for all
+--     using (auth.uid() = user_id) with check (auth.uid() = user_id);
 --
 -- ============================================================
 

@@ -58,7 +58,10 @@
   <section class="admin-panel" id="ordersPanel">
     <div class="admin-panel__head">
       <h2>Incoming orders</h2>
-      <button class="icon-btn" id="refreshOrders" aria-label="Refresh">⟳</button>
+      <div style="display:flex; gap:8px;">
+        <button class="icon-btn" id="enableAlertsBtn" aria-label="Enable order alerts" title="Enable order alerts">🔕</button>
+        <button class="icon-btn" id="refreshOrders" aria-label="Refresh">⟳</button>
+      </div>
     </div>
     <div id="adminOrdersList" class="admin-list"></div>
   </section>
@@ -133,7 +136,7 @@
   </div>
 </aside>
 
-<script type="module" src="supabase-client.js?v=8"></script>
-<script type="module" src="admin.js?v=8"></script>
+<script type="module" src="supabase-client.js?v=9"></script>
+<script type="module" src="admin.js?v=6"></script>
 </body>
 </html>

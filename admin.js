@@ -2,8 +2,10 @@ import {
   supabase, signIn, signOut, getCurrentUser, fetchProfile,
   fetchAllOrders, updateOrderStatus, deleteOrder, clearDeliveredOrders,
   fetchDishes, toggleDishAvailability, updateDishImage, createDish, updateDish, deleteDish,
-  fetchAllProfiles
+  fetchAllProfiles, savePushSubscription
 } from './supabase-client.js';
+
+const VAPID_PUBLIC_KEY = 'BI5LOaH6Ckd7X2OkZSMuqFNo4CTpi-fNVGzOCpl-Gkro93tFWXpwz4JSvZjdaytsThMxuXLrj99kGSiXSF1clMc';
 
 const money = (n) => '₦' + n.toLocaleString('en-NG');
 const STATUS_FLOW = ['pending', 'preparing', 'out_for_delivery', 'delivered'];
@@ -14,6 +16,7 @@ const loginScreen = document.getElementById('loginScreen');
 const dashboard = document.getElementById('dashboard');
 let pollTimer = null;
 let allDishes = []; // cached for the dish edit form
+let currentStaffUser = null;
 
 /* ============ AUTH GATE ============ */
 async function boot() {
@@ -33,6 +36,7 @@ async function boot() {
     return;
   }
 
+  currentStaffUser = user;
   showDashboard();
 }
 
@@ -57,6 +61,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     return;
   }
 
+  currentStaffUser = data.user;
   showDashboard();
 });
 
@@ -72,7 +77,94 @@ function showDashboard() {
   dashboard.hidden = false;
   loadOrders();
   loadMenu();
-  pollTimer = setInterval(loadOrders, 20000); // light polling refresh
+  pollTimer = setInterval(loadOrders, 20000); // light polling refresh (backup for push)
+  initPushUI();
+  listenForNewOrders();
+}
+
+/* ============ PUSH NOTIFICATIONS ============ */
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function initPushUI() {
+  const btn = document.getElementById('enableAlertsBtn');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    btn.title = 'Push not supported on this browser';
+    btn.disabled = true;
+    return;
+  }
+  // If already subscribed, quietly confirm the subscription is saved (no re-prompt).
+  if (Notification.permission === 'granted') {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      btn.textContent = '🔔';
+      btn.title = 'Order alerts enabled';
+      await savePushSubscription(currentStaffUser.id, sub.toJSON());
+      return;
+    }
+  }
+  btn.addEventListener('click', enablePushNotifications);
+}
+
+async function enablePushNotifications() {
+  const btn = document.getElementById('enableAlertsBtn');
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    alert('Notification permission was not granted — you can still see live updates while this tab is open.');
+    return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    const { error } = await savePushSubscription(currentStaffUser.id, sub.toJSON());
+    if (error) { alert('Could not save subscription: ' + error.message); return; }
+    btn.textContent = '🔔';
+    btn.title = 'Order alerts enabled';
+  } catch (err) {
+    alert('Could not enable push notifications: ' + err.message);
+  }
+}
+
+/* ============ LIVE UPDATES WHILE DASHBOARD IS OPEN ============ */
+function playAlertSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+    osc.start(); osc.stop(ctx.currentTime + 0.6);
+  } catch (e) { /* audio not available — ignore */ }
+}
+
+function listenForNewOrders() {
+  if (!supabase) return;
+  supabase
+    .channel('admin-orders-listen')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+      playAlertSound();
+      if (Notification.permission === 'granted') {
+        new Notification('New order received!', {
+          body: `Order #${payload.new.id} — ${money(payload.new.total)} from ${payload.new.customer_name || 'a guest'}`
+        });
+      }
+      loadOrders();
+    })
+    .subscribe();
 }
 
 /* ============ TABS ============ */

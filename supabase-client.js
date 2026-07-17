@@ -172,6 +172,21 @@ export async function updateDishImage(dishId, imageUrl) {
   return { data, error };
 }
 
+export async function savePushSubscription(userId, subscription) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { data, error } = await supabase
+    .from('push_subscriptions')
+    .upsert({
+      user_id: userId,
+      endpoint: subscription.endpoint,
+      p256dh: subscription.keys.p256dh,
+      auth_key: subscription.keys.auth
+    }, { onConflict: 'endpoint' })
+    .select()
+    .single();
+  return { data, error };
+}
+
 // dish = { name, category, desc, price, sizes } — `desc` is translated to the
 // `description` column here since 'desc' is a reserved SQL keyword.
 export async function createDish(dish) {
