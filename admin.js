@@ -247,6 +247,28 @@ async function setStatus(orderId, status) {
 
 document.getElementById('refreshOrders').addEventListener('click', loadOrders);
 
+/* ============ INSTALL APP (PWA) ============ */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!window.matchMedia('(display-mode: standalone)').matches) {
+    document.getElementById('installBtnAdmin').hidden = false;
+  }
+});
+
+document.getElementById('installBtnAdmin').addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById('installBtnAdmin').hidden = true;
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBtnAdmin').hidden = true;
+});
+
 /* ============ MENU: AVAILABILITY, PHOTOS, CRUD ============ */
 async function loadMenu() {
   const dishes = await fetchDishes();

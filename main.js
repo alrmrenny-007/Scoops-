@@ -381,6 +381,27 @@ function toggleFavorite(dishId) {
 
 document.getElementById('bellBtn').addEventListener('click', openOrders);
 
+/* ============ INSTALL APP (PWA) ============ */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (!window.matchMedia('(display-mode: standalone)').matches) btn.hidden = false;
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById('installBtn').hidden = true;
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBtn').hidden = true;
+});
+
 /* ============ FILTERING ============ */
 function applyFilters() {
   const q = document.getElementById('searchInput').value.trim().toLowerCase();

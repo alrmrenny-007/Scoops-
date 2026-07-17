@@ -402,6 +402,7 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
 .call-btn{padding:10px 16px; border-radius:20px; font-weight:700; font-size:.82rem;}
 .call-btn--phone{background:var(--gold); color:#2A1400;}
 .call-btn--wa{background:#25D366; color:#fff;}
+.call-btn--install{background:var(--accent); color:#fff; border:none; font-family:var(--font-body); cursor:pointer;}
 
 /* ============ BOTTOM NAV ============ */
 .bottom-nav{
