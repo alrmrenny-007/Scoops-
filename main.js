@@ -381,6 +381,18 @@ function toggleFavorite(dishId) {
 
 document.getElementById('bellBtn').addEventListener('click', openOrders);
 
+/* ============ FOOTER: COPYRIGHT YEAR + COOKIE CONSENT ============ */
+document.getElementById('copyYear').textContent = new Date().getFullYear();
+
+const cookieBanner = document.getElementById('cookieBanner');
+if (!localStorage.getItem('scoops_cookie_consent')) {
+  cookieBanner.hidden = false;
+}
+document.getElementById('cookieAcceptBtn').addEventListener('click', () => {
+  localStorage.setItem('scoops_cookie_consent', 'true');
+  cookieBanner.hidden = true;
+});
+
 /* ============ INSTALL APP (PWA) ============ */
 let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
