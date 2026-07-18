@@ -247,6 +247,27 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 --     created_at timestamptz default now()
 --   );
 --   alter table push_subscriptions enable row level security;
+--
+--   -- Fires the notify-new-order Edge Function whenever an order is inserted.
+--   -- Used instead of the dashboard's Webhooks UI, which wasn't available
+--   -- as a direct option in this project's Supabase version.
+--   create extension if not exists pg_net with schema extensions;
+--
+--   create or replace function public.notify_new_order()
+--   returns trigger language plpgsql security definer as $f$
+--   begin
+--     perform net.http_post(
+--       url := 'https://gnurqfxxwsuvyavvglpr.supabase.co/functions/v1/notify-new-order',
+--       headers := '{"Content-Type": "application/json"}'::jsonb,
+--       body := jsonb_build_object('type','INSERT','table','orders','record', row_to_json(new))
+--     );
+--     return new;
+--   end;
+--   $f$;
+--
+--   drop trigger if exists trg_notify_new_order on orders;
+--   create trigger trg_notify_new_order after insert on orders
+--   for each row execute function public.notify_new_order();
 --   drop policy if exists "Staff manage own push subscription" on push_subscriptions;
 --   create policy "Staff manage own push subscription" on push_subscriptions for all
 --     using (auth.uid() = user_id) with check (auth.uid() = user_id);
