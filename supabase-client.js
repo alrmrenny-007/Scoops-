@@ -68,8 +68,19 @@ export async function placeOrder(cartItems, total, customer = {}) {
     phone: customer.phone ?? null,
     delivery_type: customer.fulfilment ?? null,
     address: customer.address ?? null,
-    notes: customer.notes ?? null
+    notes: customer.notes ?? null,
+    payment_method: customer.paymentMethod ?? 'onsite',
+    payment_status: customer.paymentMethod === 'online' ? 'pending' : 'unpaid',
+    payment_ref: customer.paymentRef ?? null
   }).select().single();
+  return { data, error };
+}
+
+export async function verifyFlutterwavePayment(transactionId, orderId, expectedAmount) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { data, error } = await supabase.functions.invoke('verify-payment', {
+    body: { transaction_id: transactionId, order_id: orderId, expected_amount: expectedAmount }
+  });
   return { data, error };
 }
 

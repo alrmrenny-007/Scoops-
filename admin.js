@@ -189,6 +189,13 @@ async function loadOrders() {
   renderOrders(orders ?? []);
 }
 
+function paymentBadge(o) {
+  if (o.payment_method !== 'online') return `<span class="status-pill" data-status="pending" style="margin-left:6px;">Pay on delivery</span>`;
+  if (o.payment_status === 'paid') return `<span class="status-pill" data-status="delivered" style="margin-left:6px;">✓ Paid online</span>`;
+  if (o.payment_status === 'failed') return `<span class="status-pill" data-status="out_for_delivery" style="margin-left:6px;">Payment failed</span>`;
+  return `<span class="status-pill" data-status="pending" style="margin-left:6px;">Payment pending</span>`;
+}
+
 function renderOrders(orders) {
   const list = document.getElementById('adminOrdersList');
   if (!orders.length) {
@@ -211,7 +218,7 @@ function renderOrders(orders) {
         <div class="manage-card__contact">${o.phone || '—'} · ${o.delivery_type === 'pickup' ? 'Pickup' : (o.address || 'Delivery — no address given')}</div>
         <div class="manage-card__items">${items}</div>
         ${o.notes ? `<div class="manage-card__notes">Note: ${o.notes}</div>` : ''}
-        <div class="manage-card__total">${money(o.total)}</div>
+        <div class="manage-card__total">${money(o.total)} ${paymentBadge(o)}</div>
         <div class="manage-card__actions">
           ${nextStatus ? `<button class="status-btn" data-advance="${o.id}" data-next="${nextStatus}">${NEXT_LABEL[o.status]}</button>` : ''}
           ${!isDone ? `<button class="status-btn status-btn--cancel" data-cancel="${o.id}">Cancel order</button>` : ''}

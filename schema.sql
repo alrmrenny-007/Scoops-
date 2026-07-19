@@ -61,6 +61,10 @@ create table orders (
   delivery_type text,              -- 'delivery' | 'pickup'
   address text,
   notes text,
+  payment_method text default 'onsite',  -- 'onsite' | 'online'
+  payment_status text default 'unpaid',  -- unpaid | pending | paid | failed
+  payment_ref text,                      -- our generated tx_ref, sent to Flutterwave
+  flw_transaction_id text,               -- Flutterwave's transaction id, set after verification
   created_at timestamptz default now()
 );
 
@@ -271,6 +275,11 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 --   drop policy if exists "Staff manage own push subscription" on push_subscriptions;
 --   create policy "Staff manage own push subscription" on push_subscriptions for all
 --     using (auth.uid() = user_id) with check (auth.uid() = user_id);
+--
+--   alter table orders add column if not exists payment_method text default 'onsite';
+--   alter table orders add column if not exists payment_status text default 'unpaid';
+--   alter table orders add column if not exists payment_ref text;
+--   alter table orders add column if not exists flw_transaction_id text;
 --
 -- ============================================================
 

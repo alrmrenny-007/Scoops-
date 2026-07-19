@@ -1,7 +1,8 @@
 import {
   fetchDishes, fetchDeals, fetchBirthdayPackages, placeOrder,
   signUp, getCurrentUser,
-  fetchProfile, upsertProfile, fetchMyOrders, supabase
+  fetchProfile, upsertProfile, fetchMyOrders, supabase,
+  verifyFlutterwavePayment
 } from './supabase-client.js';
 
 const money = (n) => '₦' + n.toLocaleString('en-NG');
@@ -381,6 +382,23 @@ function toggleFavorite(dishId) {
 
 document.getElementById('bellBtn').addEventListener('click', openOrders);
 
+/* ============ SCROLL REVEAL ============ */
+function initScrollReveal() {
+  const targets = document.querySelectorAll('.section-head');
+  targets.forEach(el => el.classList.add('scroll-reveal'));
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  targets.forEach(el => observer.observe(el));
+}
+
 /* ============ FOOTER: COPYRIGHT YEAR + COOKIE CONSENT ============ */
 document.getElementById('copyYear').textContent = new Date().getFullYear();
 
@@ -587,20 +605,67 @@ document.querySelectorAll('input[name="fulfil"]').forEach(r => {
   });
 });
 
+const FLW_PUBLIC_KEY = 'FLWPUBK_TEST-2019c44c75f1c942c77d50a4d9bb18c9-X';
+const genTxRef = () => 'SCOOPS-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+
+function showOrderConfirmation(order, customer, total, paymentNote) {
+  saveOrderToHistory(order);
+  lastOrderCustomer = customer;
+
+  document.getElementById('confirmName').textContent = customer.name || 'there';
+  document.getElementById('confirmTicket').innerHTML = `
+    Order #${order.id}<br>
+    ${order.items.map(i => `${i.qty}× ${i.name}${i.size ? ' (' + i.size + ')' : ''}`).join('<br>')}<br>
+    ---<br>
+    Total: ${money(total)}<br>
+    ${customer.fulfilment === 'pickup' ? 'Pickup at Uke-Wende St, Makurdi' : 'Delivering to: ' + (customer.address || '—')}
+    ${paymentNote ? '<br>---<br>' + paymentNote : ''}
+  `;
+
+  const waLines = [
+    `New order #${order.id}`,
+    ...order.items.map(i => `${i.qty}× ${i.name}${i.size ? ' (' + i.size + ')' : ''}`),
+    `Total: ${money(total)}`,
+    `Name: ${customer.name || '—'}`,
+    `Phone: ${customer.phone || '—'}`,
+    customer.fulfilment === 'pickup' ? 'Pickup at store' : `Deliver to: ${customer.address || '—'}`,
+  ];
+  if (customer.notes) waLines.push(`Notes: ${customer.notes}`);
+  if (paymentNote) waLines.push(paymentNote.replace(/<[^>]+>/g, ''));
+  document.getElementById('whatsappOrderBtn').href =
+    `https://wa.me/2347087662962?text=${encodeURIComponent(waLines.join('\n'))}`;
+
+  document.getElementById('savePrompt').hidden = !!currentUser;
+
+  cart = [];
+  saveCart(); renderCart();
+  checkoutForm.reset();
+  showStep('confirm');
+}
+
 checkoutForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const total = cart.reduce((s, c) => s + c.qty * c.price, 0);
+  const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+  const txRef = paymentMethod === 'online' ? genTxRef() : null;
+
   const customer = {
     name: document.getElementById('custName').value.trim(),
     phone: document.getElementById('custPhone').value.trim(),
     fulfilment: document.querySelector('input[name="fulfil"]:checked').value,
     address: document.getElementById('custAddress').value.trim(),
-    notes: document.getElementById('custNotes').value.trim()
+    notes: document.getElementById('custNotes').value.trim(),
+    paymentMethod,
+    paymentRef: txRef
   };
 
   const submitBtn = document.getElementById('placeOrderBtn');
+  const errEl = document.getElementById('paymentError');
+  errEl.hidden = true;
   submitBtn.disabled = true; submitBtn.textContent = 'Placing order…';
 
+  // The order is always created first — even if online payment fails afterward,
+  // the order still exists and can be paid for on delivery instead of being lost.
   const { data, error } = await placeOrder(cart, total, customer);
 
   submitBtn.disabled = false; submitBtn.textContent = 'Place order';
@@ -617,37 +682,38 @@ checkoutForm.addEventListener('submit', async (e) => {
     customer,
     createdAt: Date.now()
   };
-  saveOrderToHistory(order);
-  lastOrderCustomer = customer;
 
-  document.getElementById('confirmName').textContent = customer.name || 'there';
-  document.getElementById('confirmTicket').innerHTML = `
-    Order #${order.id}<br>
-    ${order.items.map(i => `${i.qty}× ${i.name}${i.size ? ' (' + i.size + ')' : ''}`).join('<br>')}<br>
-    ---<br>
-    Total: ${money(total)}<br>
-    ${customer.fulfilment === 'pickup' ? 'Pickup at Uke-Wende St, Makurdi' : 'Delivering to: ' + (customer.address || '—')}
-  `;
+  if (paymentMethod !== 'online' || !supabase || typeof FlutterwaveCheckout === 'undefined') {
+    showOrderConfirmation(order, customer, total);
+    return;
+  }
 
-  const waLines = [
-    `New order #${order.id}`,
-    ...order.items.map(i => `${i.qty}× ${i.name}${i.size ? ' (' + i.size + ')' : ''}`),
-    `Total: ${money(total)}`,
-    `Name: ${customer.name || '—'}`,
-    `Phone: ${customer.phone || '—'}`,
-    customer.fulfilment === 'pickup' ? 'Pickup at store' : `Deliver to: ${customer.address || '—'}`,
-  ];
-  if (customer.notes) waLines.push(`Notes: ${customer.notes}`);
-  document.getElementById('whatsappOrderBtn').href =
-    `https://wa.me/2347087662962?text=${encodeURIComponent(waLines.join('\n'))}`;
-
-  // Only nudge guests — logged-in customers already have their details saved.
-  document.getElementById('savePrompt').hidden = !!currentUser;
-
-  cart = [];
-  saveCart(); renderCart();
-  checkoutForm.reset();
-  showStep('confirm');
+  // Online payment: open the Flutterwave popup, then verify server-side before confirming.
+  FlutterwaveCheckout({
+    public_key: FLW_PUBLIC_KEY,
+    tx_ref: txRef,
+    amount: total,
+    currency: 'NGN',
+    payment_options: 'card, banktransfer, ussd',
+    customer: { email: currentUser?.email || 'guest@scoops-mrjollof.com', phone_number: customer.phone, name: customer.name },
+    customizations: { title: 'Scoops × Mr. Jollof', description: `Order #${order.id}`, logo: '' },
+    callback: async (response) => {
+      if (response.status !== 'successful' && response.status !== 'completed') {
+        showOrderConfirmation(order, customer, total, '⚠️ Payment was not completed — please pay on delivery/pickup.');
+        return;
+      }
+      const { data: verifyData, error: verifyError } = await verifyFlutterwavePayment(response.transaction_id, order.id, total);
+      if (verifyError || !verifyData?.verified) {
+        showOrderConfirmation(order, customer, total, '⚠️ Payment could not be confirmed — please pay on delivery/pickup, or contact us if you were charged.');
+      } else {
+        showOrderConfirmation(order, customer, total, '✅ Payment received — thank you!');
+      }
+    },
+    onclose: () => {
+      // Popup closed without completing payment — order still exists, payable on delivery.
+      showOrderConfirmation(order, customer, total, '⚠️ Payment window closed — please pay on delivery/pickup.');
+    }
+  });
 });
 
 document.getElementById('trackOrderBtn').addEventListener('click', () => {
@@ -807,6 +873,7 @@ async function init() {
   renderTopChoices();
   renderBirthdays();
   renderCart();
+  initScrollReveal();
 }
 
 init();
