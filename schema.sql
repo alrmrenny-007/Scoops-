@@ -14,6 +14,10 @@ create table dishes (
                                     -- e.g. [{"label":"Small","price":3000},{"label":"Big","price":3800}]
   image_url text,                  -- photo URL, set from admin.html — null shows a placeholder icon
   is_available boolean default true,
+  ingredients text,                -- comma-separated, e.g. "Chicken, cheese, lettuce, house sauce"
+  prep_time text,                  -- free text estimate, e.g. "15-20 min"
+  instructions text,               -- notes for the customer, e.g. spice level, allergens, best served
+  calories integer,                -- only shown on the site if actually set — never guessed
   created_at timestamptz default now()
 );
 
@@ -280,6 +284,11 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 --   alter table orders add column if not exists payment_status text default 'unpaid';
 --   alter table orders add column if not exists payment_ref text;
 --   alter table orders add column if not exists flw_transaction_id text;
+--
+--   alter table dishes add column if not exists ingredients text;
+--   alter table dishes add column if not exists prep_time text;
+--   alter table dishes add column if not exists instructions text;
+--   alter table dishes add column if not exists calories integer;
 --
 -- ============================================================
 

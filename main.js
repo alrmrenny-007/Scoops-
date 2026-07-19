@@ -312,6 +312,32 @@ function openProductDetail(dishId) {
   document.getElementById('pdName').textContent = dish.name;
   document.getElementById('pdDesc').textContent = dish.desc;
 
+  // Stats row: only shows values staff actually entered — never guessed or fabricated.
+  const statsEl = document.getElementById('pdStats');
+  const stats = [];
+  if (dish.prep_time) stats.push(`<span class="pd-stat">⏱ ${dish.prep_time}</span>`);
+  if (dish.calories) stats.push(`<span class="pd-stat">🔥 ${dish.calories} kcal</span>`);
+  if (stats.length) { statsEl.hidden = false; statsEl.innerHTML = stats.join(''); }
+  else { statsEl.hidden = true; statsEl.innerHTML = ''; }
+
+  const ingredientsWrap = document.getElementById('pdIngredientsWrap');
+  if (dish.ingredients) {
+    ingredientsWrap.hidden = false;
+    document.getElementById('pdIngredientsRow').innerHTML = dish.ingredients
+      .split(',').map(i => i.trim()).filter(Boolean)
+      .map(i => `<span class="pd-ingredient-chip">${i}</span>`).join('');
+  } else {
+    ingredientsWrap.hidden = true;
+  }
+
+  const instructionsWrap = document.getElementById('pdInstructionsWrap');
+  if (dish.instructions) {
+    instructionsWrap.hidden = false;
+    document.getElementById('pdInstructions').textContent = dish.instructions;
+  } else {
+    instructionsWrap.hidden = true;
+  }
+
   const sizesWrap = document.getElementById('pdSizesWrap');
   if (dish.sizes) {
     sizesWrap.hidden = false;

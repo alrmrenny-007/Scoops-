@@ -6,7 +6,7 @@
 <title>Staff Dashboard — Scoops × Mr. Jollof</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style.css?v=15">
 <link rel="stylesheet" href="admin.css?v=8">
 <link rel="manifest" href="admin-manifest.json">
 <meta name="theme-color" content="#E4241B">
@@ -138,6 +138,22 @@
       <div id="dfSizeRows" style="display:flex; flex-direction:column; gap:8px;"></div>
       <button type="button" class="link-btn" id="dfAddSize" style="margin-top:8px;">+ Add size option</button>
     </div>
+    <label class="form-field">
+      <span>Ingredients <em>(optional, comma-separated)</em></span>
+      <input type="text" id="dfIngredients" placeholder="e.g. Chicken, cheese, lettuce, house sauce">
+    </label>
+    <label class="form-field">
+      <span>Prep time <em>(optional)</em></span>
+      <input type="text" id="dfPrepTime" placeholder="e.g. 15-20 min">
+    </label>
+    <label class="form-field">
+      <span>Calories <em>(optional — only shows if you fill this in)</em></span>
+      <input type="number" id="dfCalories" min="0" placeholder="e.g. 650">
+    </label>
+    <label class="form-field">
+      <span>Instructions / notes <em>(optional)</em></span>
+      <textarea id="dfInstructions" rows="2" placeholder="e.g. Spicy — ask for mild on request. Contains nuts."></textarea>
+    </label>
     <p class="form-error" id="dfError" hidden></p>
   </form>
   <div class="cart-drawer__footer">
@@ -145,7 +161,7 @@
   </div>
 </aside>
 
-<script type="module" src="supabase-client.js?v=10"></script>
-<script type="module" src="admin.js?v=8"></script>
+<script type="module" src="supabase-client.js?v=11"></script>
+<script type="module" src="admin.js?v=9"></script>
 </body>
 </html>

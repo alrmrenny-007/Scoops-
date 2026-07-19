@@ -208,7 +208,11 @@ export async function createDish(dish) {
     description: dish.desc ?? null,
     price: dish.price ?? null,
     sizes: dish.sizes ?? null,
-    is_available: true
+    is_available: true,
+    ingredients: dish.ingredients ?? null,
+    prep_time: dish.prep_time ?? null,
+    instructions: dish.instructions ?? null,
+    calories: dish.calories ?? null
   }).select().single();
   return { data, error };
 }
@@ -220,7 +224,11 @@ export async function updateDish(dishId, dish) {
     category: dish.category,
     description: dish.desc ?? null,
     price: dish.price ?? null,
-    sizes: dish.sizes ?? null
+    sizes: dish.sizes ?? null,
+    ingredients: dish.ingredients ?? null,
+    prep_time: dish.prep_time ?? null,
+    instructions: dish.instructions ?? null,
+    calories: dish.calories ?? null
   }).eq('id', dishId).select().single();
   return { data, error };
 }

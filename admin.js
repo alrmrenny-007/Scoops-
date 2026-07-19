@@ -403,6 +403,10 @@ function openDishForm(dishId = null) {
     document.getElementById('dfName').value = dish.name || '';
     document.getElementById('dfCategory').value = dish.category || '';
     document.getElementById('dfDesc').value = dish.desc || '';
+    document.getElementById('dfIngredients').value = dish.ingredients || '';
+    document.getElementById('dfPrepTime').value = dish.prep_time || '';
+    document.getElementById('dfCalories').value = dish.calories ?? '';
+    document.getElementById('dfInstructions').value = dish.instructions || '';
     if (dish.sizes && dish.sizes.length) {
       dfHasSizes.checked = true;
       dish.sizes.forEach(s => addSizeRow(s.label, s.price));
@@ -478,7 +482,13 @@ dishForm.addEventListener('submit', async (e) => {
     }
   }
 
-  const dish = { name, category, desc, price, sizes };
+  const dish = {
+    name, category, desc, price, sizes,
+    ingredients: document.getElementById('dfIngredients').value.trim() || null,
+    prep_time: document.getElementById('dfPrepTime').value.trim() || null,
+    instructions: document.getElementById('dfInstructions').value.trim() || null,
+    calories: document.getElementById('dfCalories').value ? Number(document.getElementById('dfCalories').value) : null
+  };
   const saveBtn = document.getElementById('dfSaveBtn');
   saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
 

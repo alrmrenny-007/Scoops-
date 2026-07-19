@@ -332,6 +332,15 @@ button{font-family:var(--font-body); cursor:pointer; border:none; background:non
   background:var(--surface); border:1px solid var(--border); color:var(--muted);
 }
 .pd-size-pill.is-selected{background:var(--accent); border-color:var(--accent); color:#fff;}
+.pd-ingredient-chip{
+  padding:9px 16px; border-radius:20px; font-size:.8rem; font-weight:600;
+  background:var(--surface-alt); border:1px solid var(--border); color:var(--text);
+}
+.pd-stats{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+.pd-stat{
+  display:flex; align-items:center; gap:6px; font-size:.8rem; font-weight:600; color:var(--text);
+  background:var(--surface-alt); border:1px solid var(--border); border-radius:20px; padding:8px 14px;
+}
 .pd-footer{
   position:fixed; bottom:0; left:0; right:0; z-index:81; background:var(--surface); border-top:1px solid var(--border);
   padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:14px;
