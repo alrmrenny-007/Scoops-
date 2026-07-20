@@ -1,7 +1,9 @@
 import {
   supabase, signIn, signUp, signOut, getCurrentUser,
-  fetchProfile, upsertProfile, fetchMyOrders
+  fetchProfile, upsertProfile, fetchMyOrders, savePushSubscription
 } from './supabase-client.js';
+
+const VAPID_PUBLIC_KEY = 'BI5LOaH6Ckd7X2OkZSMuqFNo4CTpi-fNVGzOCpl-Gkro93tFWXpwz4JSvZjdaytsThMxuXLrj99kGSiXSF1clMc';
 
 const money = (n) => '₦' + n.toLocaleString('en-NG');
 const STATUS_LABELS = { pending: 'Order received', preparing: 'Preparing', out_for_delivery: 'Out for delivery', delivered: 'Delivered', cancelled: 'Cancelled' };
@@ -34,7 +36,59 @@ function showAccount() {
   document.getElementById('profilePhone').value = currentProfile?.phone || '';
   document.getElementById('profileAddress').value = currentProfile?.default_address || '';
   loadOrderHistory();
+  initOrderAlertsUI();
 }
+
+/* ============ ORDER UPDATE PUSH NOTIFICATIONS ============ */
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function initOrderAlertsUI() {
+  const btn = document.getElementById('enableOrderAlertsBtn');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    btn.hidden = true;
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      btn.textContent = '🔔 Order alerts enabled';
+      await savePushSubscription(currentUser.id, sub.toJSON());
+      return;
+    }
+  }
+  btn.textContent = '🔕 Get notified when your order status changes';
+}
+
+document.getElementById('enableOrderAlertsBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('enableOrderAlertsBtn');
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    alert('Notification permission was not granted.');
+    return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    const { error } = await savePushSubscription(currentUser.id, sub.toJSON());
+    if (error) { alert('Could not save subscription: ' + error.message); return; }
+    btn.textContent = '🔔 Order alerts enabled';
+  } catch (err) {
+    alert('Could not enable notifications: ' + err.message);
+  }
+});
 
 /* ============ AUTH FORM ============ */
 document.getElementById('authToggleMode').addEventListener('click', () => {
@@ -143,9 +197,21 @@ async function loadOrderHistory() {
           <div class="status-track">
             ${STATUS_STEPS.map((s, i) => `<span class="status-track__seg ${i <= stepIndex ? 'is-filled' : ''}"></span>`).join('')}
           </div>` : ''}
+        <button class="btn btn--primary" data-reorder="${o.id}" style="margin-top:12px; padding:9px 16px; font-size:.8rem; width:auto;">🔁 Order again</button>
       </div>
     `;
   }).join('');
+
+  list.querySelectorAll('[data-reorder]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const order = orders.find(o => String(o.id) === btn.dataset.reorder);
+      if (!order) return;
+      // main.js (on index.html) owns the live menu data and cart, so hand off
+      // the items to reorder via localStorage and let it pick them up on load.
+      localStorage.setItem('scoops_reorder_items', JSON.stringify(order.items));
+      window.location.href = 'index.html';
+    });
+  });
 }
 
 boot();

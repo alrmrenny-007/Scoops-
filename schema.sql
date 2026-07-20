@@ -290,6 +290,27 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 --   alter table dishes add column if not exists instructions text;
 --   alter table dishes add column if not exists calories integer;
 --
+--   -- Notifies a CUSTOMER (not staff) when their own order's status changes,
+--   -- via the notify-order-status Edge Function. Guest orders (no account)
+--   -- are silently skipped since there's no one to target.
+--   create or replace function public.notify_order_status_change()
+--   returns trigger language plpgsql security definer as $g$
+--   begin
+--     if new.status is distinct from old.status then
+--       perform net.http_post(
+--         url := 'https://gnurqfxxwsuvyavvglpr.supabase.co/functions/v1/notify-order-status',
+--         headers := '{"Content-Type": "application/json"}'::jsonb,
+--         body := jsonb_build_object('type','UPDATE','table','orders','record', row_to_json(new), 'old_record', row_to_json(old))
+--       );
+--     end if;
+--     return new;
+--   end;
+--   $g$;
+--
+--   drop trigger if exists trg_notify_order_status on orders;
+--   create trigger trg_notify_order_status after update on orders
+--   for each row execute function public.notify_order_status_change();
+--
 -- ============================================================
 
 -- ============================================================

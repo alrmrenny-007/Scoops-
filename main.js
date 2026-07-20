@@ -402,11 +402,63 @@ function toggleFavorite(dishId) {
   if (favorites.has(dishId)) favorites.delete(dishId); else favorites.add(dishId);
   localStorage.setItem('scoops_favorites', JSON.stringify([...favorites]));
   const favBtn = document.getElementById('pdFav');
-  favBtn.textContent = favorites.has(dishId) ? '♥' : '♡';
-  favBtn.classList.toggle('is-active', favorites.has(dishId));
+  if (favBtn) {
+    favBtn.textContent = favorites.has(dishId) ? '♥' : '♡';
+    favBtn.classList.toggle('is-active', favorites.has(dishId));
+  }
+  if (!document.getElementById('favoritesDrawer').hidden) renderFavorites();
 }
 
 document.getElementById('bellBtn').addEventListener('click', openOrders);
+
+/* ============ FAVORITES DRAWER ============ */
+function renderFavorites() {
+  const list = document.getElementById('favoritesList');
+  const favDishes = dishes.filter(d => favorites.has(d.id));
+
+  if (!favDishes.length) {
+    list.innerHTML = `<p class="cart-empty">No favorites yet. Tap the ♡ on any dish to save it here.</p>`;
+    return;
+  }
+
+  list.innerHTML = favDishes.map(d => `
+    <div class="fav-card" data-fav-dish="${d.id}">
+      ${d.image_url
+        ? `<img class="fav-card__img" src="${d.image_url}" alt="${d.name}" loading="lazy" onerror="this.outerHTML='<div class=&quot;fav-card__img fav-card__img--placeholder&quot;>${CATEGORY_ICON[d.category] || '🍽️'}</div>'">`
+        : `<div class="fav-card__img fav-card__img--placeholder">${CATEGORY_ICON[d.category] || '🍽️'}</div>`
+      }
+      <div class="fav-card__info">
+        <div class="fav-card__name">${d.name}</div>
+        <div class="fav-card__price">${d.sizes ? 'From ' + money(d.sizes[0].price) : money(d.price)}</div>
+      </div>
+      <div class="fav-card__actions">
+        <button class="add-btn" data-fav-add="${d.id}" aria-label="Add ${d.name} to cart">+</button>
+        <button class="cart-line__trash" data-fav-remove="${d.id}" aria-label="Remove from favorites">🗑</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-fav-add]').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); addToCart(Number(btn.dataset.favAdd)); });
+  });
+  list.querySelectorAll('[data-fav-remove]').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(Number(btn.dataset.favRemove)); renderFavorites(); });
+  });
+  list.querySelectorAll('.fav-card').forEach(card => {
+    card.addEventListener('click', () => { closeFavorites(); openProductDetail(Number(card.dataset.favDish)); });
+  });
+}
+
+const favoritesDrawer = document.getElementById('favoritesDrawer');
+function openFavorites() {
+  renderFavorites();
+  favoritesDrawer.classList.add('is-open');
+  scrim.classList.add('is-open');
+}
+function closeFavorites() { favoritesDrawer.classList.remove('is-open'); scrim.classList.remove('is-open'); }
+
+document.getElementById('favBtn').addEventListener('click', openFavorites);
+document.getElementById('closeFavorites').addEventListener('click', closeFavorites);
 
 /* ============ SCROLL REVEAL ============ */
 function initScrollReveal() {
@@ -594,7 +646,7 @@ function closeCart() { drawer.classList.remove('is-open'); scrim.classList.remov
 document.getElementById('cartBtn').addEventListener('click', openCart);
 document.getElementById('navCart').addEventListener('click', openCart);
 document.getElementById('closeCart').addEventListener('click', closeCart);
-scrim.addEventListener('click', () => { closeCart(); closeOrders(); });
+scrim.addEventListener('click', () => { closeCart(); closeOrders(); closeFavorites(); });
 
 /* ============ CHECKOUT FLOW ============ */
 const stepCart = document.getElementById('stepCart');
@@ -785,8 +837,47 @@ function orderCardHtml(id, items, total, status, createdAt) {
         <div class="status-track">
           ${STATUS_STEPS.map((s, i) => `<span class="status-track__seg ${i <= stepIndex ? 'is-filled' : ''}"></span>`).join('')}
         </div>` : ''}
+      <button class="btn btn--primary" data-reorder="${id}" style="margin-top:12px; padding:9px 16px; font-size:.8rem; width:auto;">🔁 Order again</button>
     </div>
   `;
+}
+
+// Re-adds a past order's items to the cart, matching by dish id when available
+// (real Supabase orders) or by name as a fallback (older local-only history).
+// Anything no longer on the menu is skipped and the customer is told which.
+function reorderItems(items) {
+  const skipped = [];
+  items.forEach(item => {
+    if (item.size === 'Combo') {
+      const deal = deals.find(d => d.id === item.id || d.name === item.name);
+      if (deal) { for (let n = 0; n < item.qty; n++) addDealToCart(deal.id); }
+      else skipped.push(item.name);
+      return;
+    }
+    const dish = dishes.find(d => d.id === item.id || d.name === item.name);
+    if (!dish || dish.is_available === false) { skipped.push(item.name); return; }
+    let sizeIndex;
+    if (dish.sizes) {
+      sizeIndex = dish.sizes.findIndex(s => s.label === item.size);
+      if (sizeIndex === -1) sizeIndex = 0;
+    }
+    for (let n = 0; n < item.qty; n++) addToCart(dish.id, dish.sizes ? sizeIndex : undefined);
+  });
+  if (skipped.length) {
+    alert('Added to cart. A few items are no longer available and were skipped: ' + skipped.join(', '));
+  }
+  closeOrders();
+  openCart();
+}
+
+function wireReorderButtons(container, ordersById) {
+  container.querySelectorAll('[data-reorder]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const order = ordersById[btn.dataset.reorder];
+      if (order) reorderItems(order.items);
+    });
+  });
 }
 
 async function renderOrderHistory() {
@@ -800,6 +891,7 @@ async function renderOrderHistory() {
       list.innerHTML = remote.map(o =>
         orderCardHtml(o.id, o.items, o.total, o.status, o.created_at)
       ).join('');
+      wireReorderButtons(list, Object.fromEntries(remote.map(o => [o.id, o])));
       return;
     }
     if (remote && !remote.length) {
@@ -816,6 +908,7 @@ async function renderOrderHistory() {
     return;
   }
   list.innerHTML = orders.map(o => orderCardHtml(o.id, o.items, o.total, computeStatus(o), o.createdAt)).join('');
+  wireReorderButtons(list, Object.fromEntries(orders.map(o => [o.id, o])));
 }
 
 const ordersDrawer = document.getElementById('ordersDrawer');
@@ -900,6 +993,12 @@ async function init() {
   renderBirthdays();
   renderCart();
   initScrollReveal();
+
+  const pendingReorder = localStorage.getItem('scoops_reorder_items');
+  if (pendingReorder) {
+    localStorage.removeItem('scoops_reorder_items');
+    try { reorderItems(JSON.parse(pendingReorder)); } catch (e) { /* ignore malformed handoff */ }
+  }
 }
 
 init();
