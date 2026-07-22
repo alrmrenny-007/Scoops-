@@ -2,7 +2,8 @@ import {
   supabase, signIn, signOut, getCurrentUser, fetchProfile,
   fetchAllOrders, updateOrderStatus, deleteOrder, clearDeliveredOrders,
   fetchDishes, toggleDishAvailability, updateDishImage, createDish, updateDish, deleteDish,
-  fetchAllProfiles, savePushSubscription
+  fetchAllProfiles, savePushSubscription,
+  fetchDeliveryZones, createDeliveryZone, updateDeliveryZone, deleteDeliveryZone
 } from './supabase-client.js';
 
 const VAPID_PUBLIC_KEY = 'BI5LOaH6Ckd7X2OkZSMuqFNo4CTpi-fNVGzOCpl-Gkro93tFWXpwz4JSvZjdaytsThMxuXLrj99kGSiXSF1clMc';
@@ -177,9 +178,11 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
     document.getElementById('menuPanel').hidden = target !== 'menu';
     document.getElementById('customersPanel').hidden = target !== 'customers';
     document.getElementById('salesPanel').hidden = target !== 'sales';
+    document.getElementById('deliveryPanel').hidden = target !== 'delivery';
 
     if (target === 'customers') loadCustomers();
     if (target === 'sales') loadSales();
+    if (target === 'delivery') loadZones();
   });
 });
 
@@ -564,6 +567,38 @@ async function loadSales() {
   document.getElementById('salesWeek').textContent = money(weekTotal);
   document.getElementById('salesMonth').textContent = money(monthTotal);
   document.getElementById('salesAll').textContent = money(allTotal);
+
+  renderBestSellers(delivered);
+}
+
+function renderBestSellers(delivered) {
+  const list = document.getElementById('bestSellersList');
+  const tally = {}; // name -> { qty, revenue }
+
+  delivered.forEach(o => {
+    (o.items || []).forEach(item => {
+      const key = item.name + (item.size ? ` (${item.size})` : '');
+      if (!tally[key]) tally[key] = { qty: 0, revenue: 0 };
+      tally[key].qty += item.qty;
+      tally[key].revenue += item.qty * item.price;
+    });
+  });
+
+  const ranked = Object.entries(tally).sort((a, b) => b[1].qty - a[1].qty).slice(0, 5);
+
+  if (!ranked.length) {
+    list.innerHTML = `<p class="cart-empty">No delivered orders yet — best sellers will show up once you have sales history.</p>`;
+    return;
+  }
+
+  list.innerHTML = ranked.map(([name, stats], i) => `
+    <div class="manage-card">
+      <div class="manage-card__top">
+        <span class="manage-card__id">#${i + 1} · ${name}</span>
+      </div>
+      <div class="manage-card__items">${stats.qty} sold · ${money(stats.revenue)} in revenue</div>
+    </div>
+  `).join('');
 }
 
 document.getElementById('clearDeliveredBtn').addEventListener('click', async () => {
@@ -572,6 +607,102 @@ document.getElementById('clearDeliveredBtn').addEventListener('click', async () 
   if (error) { alert('Could not clear orders: ' + error.message); return; }
   loadSales();
   loadOrders();
+});
+
+/* ============ DELIVERY ZONES ============ */
+let allZones = [];
+let editingZoneId = null;
+
+async function loadZones() {
+  allZones = (await fetchDeliveryZones()) || [];
+  renderZones();
+}
+
+function renderZones() {
+  const list = document.getElementById('zonesList');
+  if (!allZones.length) {
+    list.innerHTML = `<p class="cart-empty">No delivery zones yet — add one so customers can pick it at checkout.</p>`;
+    return;
+  }
+  list.innerHTML = allZones.map(z => `
+    <div class="manage-card">
+      <div class="manage-card__top">
+        <span class="manage-card__id">${z.name}</span>
+        <span class="manage-card__time">${money(z.fee)}</span>
+      </div>
+      <div class="manage-card__actions">
+        <button class="status-btn" data-edit-zone="${z.id}">Edit</button>
+        <button class="status-btn status-btn--cancel" data-delete-zone="${z.id}">Delete</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-edit-zone]').forEach(btn => {
+    btn.addEventListener('click', () => openZoneForm(Number(btn.dataset.editZone)));
+  });
+  list.querySelectorAll('[data-delete-zone]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Delete this delivery zone?')) return;
+      const { error } = await deleteDeliveryZone(Number(btn.dataset.deleteZone));
+      if (error) { alert('Could not delete: ' + error.message); return; }
+      loadZones();
+    });
+  });
+}
+
+function openZoneForm(zoneId) {
+  editingZoneId = zoneId || null;
+  document.getElementById('zfError').hidden = true;
+  document.getElementById('zoneForm').reset();
+  document.getElementById('zfDeleteBtn').hidden = !zoneId;
+
+  if (zoneId) {
+    const zone = allZones.find(z => z.id === zoneId);
+    document.getElementById('zoneFormTitle').textContent = 'Edit zone';
+    document.getElementById('zfName').value = zone.name;
+    document.getElementById('zfFee').value = zone.fee;
+  } else {
+    document.getElementById('zoneFormTitle').textContent = 'Add zone';
+  }
+
+  document.getElementById('zoneFormOverlay').hidden = false;
+}
+
+function closeZoneForm() {
+  document.getElementById('zoneFormOverlay').hidden = true;
+}
+
+document.getElementById('addZoneBtn').addEventListener('click', () => openZoneForm(null));
+document.getElementById('closeZoneForm').addEventListener('click', closeZoneForm);
+
+document.getElementById('zoneForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const zone = {
+    name: document.getElementById('zfName').value.trim(),
+    fee: Number(document.getElementById('zfFee').value)
+  };
+  const errEl = document.getElementById('zfError');
+  const saveBtn = document.getElementById('zfSaveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+
+  const { error } = editingZoneId ? await updateDeliveryZone(editingZoneId, zone) : await createDeliveryZone(zone);
+
+  saveBtn.disabled = false; saveBtn.textContent = 'Save zone';
+
+  if (error) {
+    errEl.hidden = false; errEl.textContent = error.message || 'Could not save this zone.';
+    return;
+  }
+  closeZoneForm();
+  loadZones();
+});
+
+document.getElementById('zfDeleteBtn').addEventListener('click', async () => {
+  if (!editingZoneId || !confirm('Delete this delivery zone?')) return;
+  const { error } = await deleteDeliveryZone(editingZoneId);
+  if (error) { alert('Could not delete: ' + error.message); return; }
+  closeZoneForm();
+  loadZones();
 });
 
 boot();

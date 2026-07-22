@@ -69,6 +69,15 @@ create table orders (
   payment_status text default 'unpaid',  -- unpaid | pending | paid | failed
   payment_ref text,                      -- our generated tx_ref, sent to Flutterwave
   flw_transaction_id text,               -- Flutterwave's transaction id, set after verification
+  delivery_zone text,                    -- name of the zone picked, e.g. "High Level (nearby)"
+  delivery_fee integer default 0,        -- fee at time of order — kept even if the zone's fee later changes
+  created_at timestamptz default now()
+);
+
+create table delivery_zones (
+  id bigint generated always as identity primary key,
+  name text not null,
+  fee integer not null,
   created_at timestamptz default now()
 );
 
@@ -88,6 +97,7 @@ alter table birthday_packages enable row level security;
 alter table profiles enable row level security;
 alter table orders enable row level security;
 alter table push_subscriptions enable row level security;
+alter table delivery_zones enable row level security;
 
 -- Staff manage their own push subscription (the notify-new-order Edge Function
 -- reads all of these using the service role key, which bypasses RLS)
@@ -97,6 +107,7 @@ create policy "Staff manage own push subscription" on push_subscriptions for all
 create policy "Public read dishes" on dishes for select using (true);
 create policy "Public read deals" on deals for select using (true);
 create policy "Public read birthday_packages" on birthday_packages for select using (true);
+create policy "Public read delivery_zones" on delivery_zones for select using (true);
 
 -- Profiles: a user can only see/edit their own profile
 create policy "Users read own profile" on profiles for select using (auth.uid() = id);
@@ -116,6 +127,9 @@ stable
 as $$
   select coalesce((select is_staff from profiles where id = auth.uid()), false);
 $$;
+
+create policy "Staff manage delivery zones" on delivery_zones for all
+  using (is_staff_user()) with check (is_staff_user());
 
 -- Orders: customers see only their own; staff see and update everything
 create policy "Users read own orders" on orders for select using (
@@ -212,6 +226,15 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 ('Basic', 30000, 35000, '["1 Table Reservation","Balloon table decoration","Allowed to bring in Cakes"]', false),
 ('Flex', 80000, 90000, '["2 Table Reservations","Balloon table decoration","Allowed to bring in Cakes","1 gift pack for celebrant"]', true),
 ('Experience', 150000, 165000, '["2+ Table Reservation","Balloon table decoration","Allowed to bring in Cakes","1 gift pack for celebrant","Free photoshoot"]', false);
+
+-- ---------- SEED: DELIVERY ZONES ----------
+-- Starter zones for Makurdi — rename, reprice, add, or delete these anytime
+-- from admin.html's Delivery tab. Nothing here is final.
+insert into delivery_zones (name, fee) values
+('High Level (nearby)', 500),
+('Wurukum', 800),
+('Old GRA / North Bank', 1000),
+('Outside Makurdi town', 1500);
 
 -- ============================================================
 -- ALREADY HAVE A LIVE DATABASE? Don't re-run this whole file —
@@ -310,6 +333,25 @@ insert into birthday_packages (tier, cost, voucher, perks, featured) values
 --   drop trigger if exists trg_notify_order_status on orders;
 --   create trigger trg_notify_order_status after update on orders
 --   for each row execute function public.notify_order_status_change();
+--
+--   alter table orders add column if not exists delivery_zone text;
+--   alter table orders add column if not exists delivery_fee integer default 0;
+--
+--   create table if not exists delivery_zones (
+--     id bigint generated always as identity primary key,
+--     name text not null,
+--     fee integer not null,
+--     created_at timestamptz default now()
+--   );
+--   alter table delivery_zones enable row level security;
+--   drop policy if exists "Public read delivery zones" on delivery_zones;
+--   create policy "Public read delivery zones" on delivery_zones for select using (true);
+--   drop policy if exists "Staff manage delivery zones" on delivery_zones;
+--   create policy "Staff manage delivery zones" on delivery_zones for all
+--     using (is_staff_user()) with check (is_staff_user());
+--   insert into delivery_zones (name, fee) values
+--     ('High Level (nearby)', 500), ('Wurukum', 800),
+--     ('Old GRA / North Bank', 1000), ('Outside Makurdi town', 1500);
 --
 -- ============================================================
 

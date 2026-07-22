@@ -37,6 +37,31 @@ export async function fetchDeals() {
   return data;
 }
 
+export async function fetchDeliveryZones() {
+  if (!supabase) return null;
+  const { data, error } = await supabase.from('delivery_zones').select('*').order('fee');
+  if (error) { console.error('fetchDeliveryZones:', error.message); return null; }
+  return data;
+}
+
+export async function createDeliveryZone(zone) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { data, error } = await supabase.from('delivery_zones').insert({ name: zone.name, fee: zone.fee }).select().single();
+  return { data, error };
+}
+
+export async function updateDeliveryZone(zoneId, zone) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { data, error } = await supabase.from('delivery_zones').update({ name: zone.name, fee: zone.fee }).eq('id', zoneId).select().single();
+  return { data, error };
+}
+
+export async function deleteDeliveryZone(zoneId) {
+  if (!supabase) return { error: 'Supabase not configured yet.' };
+  const { error } = await supabase.from('delivery_zones').delete().eq('id', zoneId);
+  return { error };
+}
+
 export async function fetchBirthdayPackages() {
   if (!supabase) return null;
   const { data, error } = await supabase.from('birthday_packages').select('*').order('cost');
@@ -71,7 +96,9 @@ export async function placeOrder(cartItems, total, customer = {}) {
     notes: customer.notes ?? null,
     payment_method: customer.paymentMethod ?? 'onsite',
     payment_status: customer.paymentMethod === 'online' ? 'pending' : 'unpaid',
-    payment_ref: customer.paymentRef ?? null
+    payment_ref: customer.paymentRef ?? null,
+    delivery_fee: customer.deliveryFee ?? 0,
+    delivery_zone: customer.deliveryZone ?? null
   }).select().single();
   return { data, error };
 }

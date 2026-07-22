@@ -2,7 +2,7 @@ import {
   fetchDishes, fetchDeals, fetchBirthdayPackages, placeOrder,
   signUp, getCurrentUser,
   fetchProfile, upsertProfile, fetchMyOrders, supabase,
-  verifyFlutterwavePayment
+  verifyFlutterwavePayment, fetchDeliveryZones
 } from './supabase-client.js';
 
 const money = (n) => '₦' + n.toLocaleString('en-NG');
@@ -661,27 +661,46 @@ function showStep(step) {
   stepConfirm.hidden = step !== 'confirm';
 }
 
+let deliveryZones = [];
+
+function getSelectedDeliveryFee() {
+  const isDelivery = document.querySelector('input[name="fulfil"]:checked').value === 'delivery';
+  if (!isDelivery || !deliveryZones.length) return 0;
+  const zone = deliveryZones.find(z => String(z.id) === document.getElementById('custZone').value);
+  return zone ? zone.fee : 0;
+}
+
+function updateCheckoutTotal() {
+  const subtotal = cart.reduce((s, c) => s + c.qty * c.price, 0);
+  const fee = getSelectedDeliveryFee();
+  document.getElementById('checkoutTotal').textContent = money(subtotal + fee);
+}
+
 document.getElementById('checkoutBtn').addEventListener('click', () => {
   if (!cart.length) return;
-  document.getElementById('checkoutTotal').textContent = document.getElementById('cartTotal').textContent;
   if (currentProfile) {
     document.getElementById('custName').value = currentProfile.name || '';
     document.getElementById('custPhone').value = currentProfile.phone || '';
     document.getElementById('custAddress').value = currentProfile.default_address || '';
   }
+  updateCheckoutTotal();
   showStep('checkout');
 });
 document.getElementById('backToCart').addEventListener('click', () => showStep('cart'));
 document.getElementById('closeCheckout').addEventListener('click', closeCart);
 document.getElementById('closeConfirm').addEventListener('click', () => { showStep('cart'); closeCart(); });
 
+const zoneField = document.getElementById('zoneField');
 document.querySelectorAll('input[name="fulfil"]').forEach(r => {
   r.addEventListener('change', () => {
     const isDelivery = document.querySelector('input[name="fulfil"]:checked').value === 'delivery';
     addressField.style.display = isDelivery ? '' : 'none';
+    zoneField.style.display = (isDelivery && deliveryZones.length) ? '' : 'none';
     document.getElementById('custAddress').required = isDelivery;
+    updateCheckoutTotal();
   });
 });
+document.getElementById('custZone').addEventListener('change', updateCheckoutTotal);
 
 const FLW_PUBLIC_KEY = 'FLWPUBK_TEST-2019c44c75f1c942c77d50a4d9bb18c9-X';
 const genTxRef = () => 'SCOOPS-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
@@ -690,13 +709,17 @@ function showOrderConfirmation(order, customer, total, paymentNote) {
   saveOrderToHistory(order);
   lastOrderCustomer = customer;
 
+  const deliveryLine = customer.fulfilment === 'pickup'
+    ? 'Pickup at Uke-Wende St, Makurdi'
+    : `Delivering to: ${customer.address || '—'}${customer.deliveryZone ? ` (${customer.deliveryZone}, +${money(customer.deliveryFee || 0)} delivery)` : ''}`;
+
   document.getElementById('confirmName').textContent = customer.name || 'there';
   document.getElementById('confirmTicket').innerHTML = `
     Order #${order.id}<br>
     ${order.items.map(i => `${i.qty}× ${i.name}${i.size ? ' (' + i.size + ')' : ''}`).join('<br>')}<br>
     ---<br>
     Total: ${money(total)}<br>
-    ${customer.fulfilment === 'pickup' ? 'Pickup at Uke-Wende St, Makurdi' : 'Delivering to: ' + (customer.address || '—')}
+    ${deliveryLine}
     ${paymentNote ? '<br>---<br>' + paymentNote : ''}
   `;
 
@@ -706,7 +729,7 @@ function showOrderConfirmation(order, customer, total, paymentNote) {
     `Total: ${money(total)}`,
     `Name: ${customer.name || '—'}`,
     `Phone: ${customer.phone || '—'}`,
-    customer.fulfilment === 'pickup' ? 'Pickup at store' : `Deliver to: ${customer.address || '—'}`,
+    deliveryLine,
   ];
   if (customer.notes) waLines.push(`Notes: ${customer.notes}`);
   if (paymentNote) waLines.push(paymentNote.replace(/<[^>]+>/g, ''));
@@ -723,9 +746,12 @@ function showOrderConfirmation(order, customer, total, paymentNote) {
 
 checkoutForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const total = cart.reduce((s, c) => s + c.qty * c.price, 0);
+  const subtotal = cart.reduce((s, c) => s + c.qty * c.price, 0);
+  const deliveryFee = getSelectedDeliveryFee();
+  const total = subtotal + deliveryFee;
   const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
   const txRef = paymentMethod === 'online' ? genTxRef() : null;
+  const selectedZone = deliveryZones.find(z => String(z.id) === document.getElementById('custZone').value);
 
   const customer = {
     name: document.getElementById('custName').value.trim(),
@@ -734,7 +760,9 @@ checkoutForm.addEventListener('submit', async (e) => {
     address: document.getElementById('custAddress').value.trim(),
     notes: document.getElementById('custNotes').value.trim(),
     paymentMethod,
-    paymentRef: txRef
+    paymentRef: txRef,
+    deliveryFee,
+    deliveryZone: (document.querySelector('input[name="fulfil"]:checked').value === 'delivery' && selectedZone) ? selectedZone.name : null
   };
 
   const submitBtn = document.getElementById('placeOrderBtn');
@@ -973,13 +1001,22 @@ document.querySelectorAll('.bottom-nav__item').forEach(item => {
 
 /* ============ INIT ============ */
 async function init() {
-  const [liveDishes, liveDeals, liveBdays] = await Promise.all([
-    fetchDishes(), fetchDeals(), fetchBirthdayPackages()
+  const [liveDishes, liveDeals, liveBdays, liveZones] = await Promise.all([
+    fetchDishes(), fetchDeals(), fetchBirthdayPackages(), fetchDeliveryZones()
   ]);
 
   dishes = liveDishes ?? DEMO_DISHES;
   deals = liveDeals ?? DEMO_DEALS;
   bdayPackages = liveBdays ?? DEMO_BIRTHDAYS;
+  deliveryZones = liveZones ?? [];
+
+  const zoneSelect = document.getElementById('custZone');
+  if (deliveryZones.length) {
+    zoneSelect.innerHTML = deliveryZones.map(z => `<option value="${z.id}">${z.name} — ${money(z.fee)}</option>`).join('');
+    zoneField.style.display = document.querySelector('input[name="fulfil"]:checked').value === 'delivery' ? '' : 'none';
+  } else {
+    zoneField.style.display = 'none';
+  }
 
   if (supabase) {
     currentUser = await getCurrentUser();

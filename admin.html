@@ -6,7 +6,7 @@
 <title>Staff Dashboard — Scoops × Mr. Jollof</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=17">
 <link rel="stylesheet" href="admin.css?v=8">
 <link rel="manifest" href="admin-manifest.json">
 <meta name="theme-color" content="#E4241B">
@@ -61,6 +61,7 @@
     <button class="admin-tab" data-tab="menu">Menu</button>
     <button class="admin-tab" data-tab="customers">Customers</button>
     <button class="admin-tab" data-tab="sales">Sales</button>
+    <button class="admin-tab" data-tab="delivery">Delivery</button>
   </nav>
 
   <!-- ORDERS TAB -->
@@ -100,10 +101,49 @@
       <div class="sales-stat"><span class="sales-stat__label">All time</span><span class="sales-stat__value" id="salesAll">—</span></div>
     </div>
     <p class="cart-empty" style="margin-top:10px;">Based on orders marked "Delivered". Cancelled orders aren't counted.</p>
-    <button class="status-btn status-btn--cancel" id="clearDeliveredBtn" style="margin-top:20px;">Clear all delivered orders</button>
+
+    <div class="admin-panel__head" style="margin-top:24px;"><h2>Best sellers</h2></div>
+    <div id="bestSellersList" class="admin-list"></div>
+
+    <button class="status-btn status-btn--cancel" id="clearDeliveredBtn" style="margin-top:24px;">Clear all delivered orders</button>
     <p class="photo-hint" style="margin-top:8px;">Permanently deletes delivered orders so sales reset to zero. Use this after you've reconciled a period — it can't be undone.</p>
   </section>
 
+  <!-- DELIVERY TAB -->
+  <section class="admin-panel" id="deliveryPanel" hidden>
+    <div class="admin-panel__head">
+      <h2>Delivery zones</h2>
+      <button class="status-btn" id="addZoneBtn">+ Add zone</button>
+    </div>
+    <p class="cart-empty">Customers pick one of these at checkout when ordering delivery. Rename, reprice, add, or delete anytime.</p>
+    <div id="zonesList" class="admin-list" style="margin-top:14px;"></div>
+  </section>
+
+</div>
+
+<!-- ZONE FORM (add/edit) -->
+<div class="product-detail" id="zoneFormOverlay" hidden>
+  <div class="pd-body" style="padding-top:24px;">
+    <div class="cart-drawer__head">
+      <h3 id="zoneFormTitle">Add zone</h3>
+      <button class="icon-btn" id="closeZoneForm">✕</button>
+    </div>
+    <form id="zoneForm" class="checkout-form">
+      <label class="form-field">
+        <span>Zone name</span>
+        <input type="text" id="zfName" required placeholder="e.g. High Level (nearby)">
+      </label>
+      <label class="form-field">
+        <span>Delivery fee (₦)</span>
+        <input type="number" id="zfFee" required min="0" placeholder="e.g. 500">
+      </label>
+      <p class="form-error" id="zfError" hidden></p>
+    </form>
+  </div>
+  <div class="pd-footer">
+    <button class="status-btn status-btn--cancel" id="zfDeleteBtn" hidden>Delete zone</button>
+    <button class="btn btn--primary" id="zfSaveBtn" form="zoneForm" type="submit">Save zone</button>
+  </div>
 </div>
 
 <!-- DISH ADD/EDIT FORM -->
@@ -161,7 +201,7 @@
   </div>
 </aside>
 
-<script type="module" src="supabase-client.js?v=11"></script>
-<script type="module" src="admin.js?v=9"></script>
+<script type="module" src="supabase-client.js?v=12"></script>
+<script type="module" src="admin.js?v=11"></script>
 </body>
 </html>
